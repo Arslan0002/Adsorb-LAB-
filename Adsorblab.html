@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adsorblab | ArslanENV — Adsorption Analysis & Research Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+:root {
+  --primary: #1e4a6b; --primary-light: #e8f0f8; --accent: #2a7f6e; --accent-light: #e0f2f0;
+  --border: #d0ddee; --bg: #f5f9ff; --card-bg: #ffffff; --text: #1e2b3c;
+  --text-muted: #4a5e72; --shadow: 0 4px 12px rgba(0,0,0,0.04); --radius: 12px;
+  --sidebar-width: 280px; --warn: #d97706; --danger: #b33a3a;
+}
+body { background: var(--bg); color: var(--text); line-height: 1.6; display: flex; min-height: 100vh; }
+.sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border);
+  height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column;
+  overflow-y: auto; padding: 1.2rem 0.8rem; transition: transform 0.2s; z-index: 100;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.02); }
+.logo { display: flex; align-items: center; gap: 10px; padding: 0.5rem 0.8rem 1rem;
+  font-weight: 700; font-size: 1.1rem; color: var(--primary);
+  border-bottom: 1px solid var(--border); margin-bottom: 0.8rem; }
+.logo i { font-size: 1.6rem; color: var(--accent); }
+.logo .sub { font-size: 0.7rem; font-weight: 400; color: var(--text-muted); display: block; margin-top: 2px; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 0.65rem 0.9rem;
+  border-radius: 8px; color: var(--text-muted); font-size: 0.88rem; font-weight: 500;
+  cursor: pointer; transition: 0.15s; margin-bottom: 2px; border-left: 3px solid transparent; }
+.nav-item i { width: 18px; font-size: 0.95rem; color: var(--primary); opacity: 0.8; }
+.nav-item:hover { background: var(--primary-light); color: var(--primary); }
+.nav-item.active { background: var(--primary-light); color: var(--primary);
+  border-left-color: var(--accent); font-weight: 600; }
+.nav-item.active i { color: var(--accent); opacity: 1; }
+.nav-item.new-tag::after { content: 'NEW'; font-size: 0.55rem; background: var(--accent);
+  color: white; padding: 2px 5px; border-radius: 3px; margin-left: auto; font-weight: 700; }
+.main { flex: 1; padding: 1.8rem 2rem; max-width: calc(100% - var(--sidebar-width)); overflow-x: auto; }
+.module { display: none; animation: fade 0.15s ease; }
+.module.active { display: block; }
+@keyframes fade { from { opacity: 0.5; } to { opacity: 1; } }
+h1 { font-size: 1.7rem; font-weight: 600; color: var(--primary); margin-bottom: 0.4rem; }
+h2 { font-size: 1.3rem; font-weight: 600; color: var(--primary); margin: 1.5rem 0 0.6rem; }
+h3 { font-size: 1.05rem; font-weight: 600; color: var(--primary); margin: 1.2rem 0 0.5rem; }
+h4 { font-size: 0.95rem; font-weight: 600; color: var(--primary); margin: 0.8rem 0 0.4rem; }
+p { margin-bottom: 0.7rem; }
+.subhead { color: var(--text-muted); margin-bottom: 1.8rem; font-size: 0.95rem;
+  border-left: 4px solid var(--accent); padding-left: 1rem; }
+.card { background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem;
+  box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 1.5rem; }
+.card-title { font-size: 1.15rem; font-weight: 600; color: var(--primary);
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block;
+  margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+input, select, textarea { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 0.9rem; background: white; transition: 0.15s; font-family: inherit; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-light); border-color: var(--accent); }
+.input-group { margin-bottom: 0.9rem; }
+button { background: white; border: 1px solid var(--border); padding: 0.55rem 1.1rem;
+  border-radius: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; transition: 0.15s; color: var(--text);
+  font-family: inherit; }
+button i { font-size: 0.9rem; color: var(--primary); }
+button:hover { background: var(--primary-light); border-color: var(--primary); }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
+.btn-primary i { color: white; }
+.btn-primary:hover { background: #143b55; }
+.btn-accent { background: var(--accent); border-color: var(--accent); color: white; }
+.btn-accent i { color: white; }
+.btn-accent:hover { background: #1f6556; }
+.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.75rem; }
+.btn-danger { color: var(--danger); border-color: #ecc8c8; }
+.btn-danger:hover { background: #fce8e8; }
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border);
+  background: white; margin: 1rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 600px; }
+th { background: var(--primary-light); color: var(--primary); font-weight: 600;
+  padding: 0.7rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 0.5rem 0.7rem; border-bottom: 1px solid #edf2f9; color: var(--text); }
+tr:last-child td { border-bottom: none; }
+.calc-result { background: #f4fbf9; color: #0d4f3f; font-weight: 500; }
+.hamburger { display: none; position: fixed; top: 12px; left: 12px; z-index: 200;
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 12px; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); position: fixed; height: 100%; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
+  .sidebar.open { transform: translateX(0); }
+  .hamburger { display: block; }
+  .main { max-width: 100%; padding: 4rem 1rem 2rem; }
+}
+.progress-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 0.3rem 0; }
+.progress-item i.fa-check-circle { color: var(--accent); }
+.progress-item i.fa-circle { color: #cbd5e1; }
+hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+.module-footer { margin-top: 2rem; font-size: 0.78rem; color: var(--text-muted);
+  text-align: center; padding: 1rem; background: #edf3fa; border-radius: 20px; }
+.module-footer .copy { display: block; margin-top: 0.4rem; font-size: 0.7rem; }
+.flex-row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+.mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; } .mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.5rem; } .mb-2 { margin-bottom: 1rem; }
+.text-muted { color: var(--text-muted); font-size: 0.83rem; }
+.result-highlight { background: var(--accent-light); border-left: 4px solid var(--accent);
+  padding: 0.9rem 1rem; border-radius: 0 8px 8px 0; font-size: 0.92rem; margin: 0.8rem 0; }
+.chart-container { position: relative; height: 280px; width: 100%; margin: 1rem 0; }
+canvas { max-width: 100%; }
+.study-selector { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  background: white; padding: 0.8rem 1rem; border-radius: 10px;
+  border: 1px solid var(--border); margin-bottom: 1.5rem; }
+.study-selector select { width: auto; min-width: 220px; }
+.import-box { background: #f9fcff; border: 1px dashed var(--border); border-radius: 10px;
+  padding: 1rem; margin-top: 1rem; }
+.import-box label { text-transform: none; font-weight: 600; color: var(--primary);
+  font-size: 0.88rem; margin-bottom: 0.5rem; }
+.status-msg { padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.6rem; }
+.status-ok { background: #d4f0e8; color: #0b5e48; }
+.status-err { background: #fce8e8; color: #a13a3a; }
+.status-warn { background: #fff3d1; color: #8a6d1f; }
+.warning-box { background: #fffbf0; border-left: 4px solid var(--warn); padding: 1rem;
+  border-radius: 0 8px 8px 0; margin: 1rem 0; }
+.info-box { background: #f0f7fc; border-left: 4px solid var(--primary); padding: 1rem;
+  border-radius: 0 8px 8px 0; margin: 1rem 0; }
+.dedication-item { padding: 0.5rem 0; border-bottom: 1px dashed #e8eef5; }
+.dedication-item:last-child { border-bottom: none; }
+.dedication-item strong { color: var(--primary); }
+.floating-feedback { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+.floating-feedback a { background: var(--accent); color: white; padding: 12px 20px;
+  border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.88rem;
+  box-shadow: 0 6px 20px rgba(42,127,110,0.4); display: flex; align-items: center;
+  gap: 8px; transition: 0.2s; }
+.floating-feedback a:hover { background: #1f6556; transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(42,127,110,0.5); }
+.badge-tag { display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-new { background: var(--accent); color: white; }
+.badge-demo { background: #fef3c7; color: #92400e; }
+.stat-mini { background: #f9fcff; padding: 0.7rem; border-radius: 8px; border: 1px solid var(--border);
+  text-align: center; }
+.stat-mini .val { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+.stat-mini .lbl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.tag-pill { display: inline-block; background: var(--accent-light); color: var(--accent);
+  padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin: 2px; }
+</style>
+</head>
+<body>
+
+<div class="hamburger" id="hamburger"><i class="fas fa-bars"></i></div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="logo">
+    <i class="fas fa-flask"></i>
+    <div>Adsorblab <span class="sub">by ArslanENV</span></div>
+  </div>
+
+  <div class="nav-item active" data-module="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</div>
+  <div class="nav-item new-tag" data-module="intro"><i class="fas fa-info-circle"></i> Introduction & Guide</div>
+  <div class="nav-item new-tag" data-module="declaration"><i class="fas fa-file-signature"></i> Dedication</div>
+  <div class="nav-item" data-module="setup"><i class="fas fa-cog"></i> Research Setup</div>
+  <div class="nav-item" data-module="guide"><i class="fas fa-book-open"></i> Adsorption Guide</div>
+  <div class="nav-item" data-module="spectro"><i class="fas fa-vial"></i> Spectrophotometer</div>
+  <div class="nav-item" data-module="equilibrium"><i class="fas fa-clock"></i> Equilibrium Study</div>
+  <div class="nav-item" data-module="isotherm"><i class="fas fa-chart-line"></i> Isotherm Study</div>
+  <div class="nav-item" data-module="kinetics"><i class="fas fa-tachometer-alt"></i> Kinetics Study</div>
+  <div class="nav-item" data-module="thermo"><i class="fas fa-temperature-high"></i> Thermodynamics</div>
+  <div class="nav-item" data-module="compare"><i class="fas fa-balance-scale"></i> Model Comparison</div>
+  <div class="nav-item" data-module="summary"><i class="fas fa-file-alt"></i> Research Summary</div>
+  <div class="nav-item" data-module="formula"><i class="fas fa-square-root-variable"></i> Formula Reference</div>
+  <div class="nav-item" data-module="experiment"><i class="fas fa-flask"></i> Experiment Guide</div>
+  <div class="nav-item" data-module="importexport"><i class="fas fa-exchange-alt"></i> Data Import/Export</div>
+  <div class="nav-item" data-module="settings"><i class="fas fa-sliders-h"></i> Settings</div>
+  <div class="nav-item new-tag" data-module="feedback"><i class="fas fa-envelope"></i> Feedback & Contact</div>
+</nav>
+
+<main class="main" id="mainContent">
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="module active" id="module-dashboard">
+  <h1>Dashboard</h1>
+  <div class="subhead">Overview of your current adsorption study — welcome to Adsorblab | ArslanENV</div>
+
+  <div class="study-selector">
+    <i class="fas fa-folder-open" style="color: var(--primary);"></i>
+    <select id="dashboardStudySelect"></select>
+    <button class="btn-sm btn-primary" id="newStudyBtn"><i class="fas fa-plus"></i> New Study</button>
+    <button class="btn-sm" id="duplicateStudyBtn"><i class="fas fa-copy"></i> Duplicate</button>
+    <button class="btn-sm" id="renameStudyBtn"><i class="fas fa-edit"></i> Rename</button>
+    <button class="btn-sm btn-danger" id="deleteStudyBtn"><i class="fas fa-trash"></i> Delete</button>
+  </div>
+
+  <div class="grid-3" id="dashboardStats"></div>
+
+  <div class="card mt-2">
+    <div class="card-title"><i class="fas fa-check-circle" style="color: var(--accent);"></i> Module Progress</div>
+    <div id="dashboardProgress"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-rocket"></i> Quick Start</div>
+    <div class="grid-4">
+      <div class="stat-mini"><div class="val"><i class="fas fa-vial" style="color: var(--accent);"></i></div><div class="lbl">1. Standard Curve</div></div>
+      <div class="stat-mini"><div class="val"><i class="fas fa-clock" style="color: var(--accent);"></i></div><div class="lbl">2. Equilibrium</div></div>
+      <div class="stat-mini"><div class="val"><i class="fas fa-chart-line" style="color: var(--accent);"></i></div><div class="lbl">3. Isotherm</div></div>
+      <div class="stat-mini"><div class="val"><i class="fas fa-tachometer-alt" style="color: var(--accent);"></i></div><div class="lbl">4. Kinetics</div></div>
+    </div>
+    <p class="text-muted mt-2">Demo data is pre-loaded. Explore each module from the sidebar, or click <strong>New Study</strong> above to start your own experiment.</p>
+  </div>
+
+  <div class="module-footer">
+    Input → Calculation → Graph → Interpretation
+    <span class="copy">© 2025 Adsorblab | ArslanENV — Feedback: arslanenv1@gmail.com</span>
+  </div>
+</div>
+
+<!-- ═══════════ INTRODUCTION ═══════════ -->
+<div class="module" id="module-intro">
+  <h1>📖 Introduction & User Guide</h1>
+  <div class="subhead">Read this first — how to use Adsorblab and understand your results</div>
+
+  <div class="card" style="border-left: 5px solid var(--accent);">
+    <div class="card-title"><i class="fas fa-star" style="color: var(--accent);"></i> Welcome to Adsorblab | ArslanENV</div>
+    <p style="font-size: 1.02rem; line-height: 1.8;">
+      <strong>Adsorblab | ArslanENV</strong> is a complete, browser-based research dashboard
+      designed to help students, teachers, and researchers perform <strong>full adsorption studies</strong>
+      — from raw data entry to publication-ready results — without needing Excel, Origin, or any
+      paid software. It works entirely in your browser, stores data locally, and requires no internet
+      connection after the first load.
+    </p>
+    <div class="flex-row mt-2">
+      <span class="tag-pill"><i class="fas fa-check"></i> No backend</span>
+      <span class="tag-pill"><i class="fas fa-check"></i> Works offline</span>
+      <span class="tag-pill"><i class="fas fa-check"></i> Free to use</span>
+      <span class="tag-pill"><i class="fas fa-check"></i> Educational</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-users"></i> Who is this for?</div>
+    <ul style="line-height: 2; margin-left: 1.5rem;">
+      <li><strong>BS / MSc / MPhil / PhD Students</strong> working on adsorption experiments</li>
+      <li><strong>Teachers & Professors</strong> teaching environmental chemistry or water treatment</li>
+      <li><strong>Researchers</strong> in Environmental Science, Chemistry, Materials Science</li>
+      <li><strong>Laboratory Technicians</strong> handling UV-Vis and adsorption studies</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-rocket"></i> How to Use — Step-by-Step Workflow</div>
+
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 1:</strong> Open the dashboard — <em>demo data loads automatically</em> so you can explore and learn.
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 2:</strong> Create your own study → <em>Dashboard → New Study button</em>
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 3:</strong> Fill <em>Research Setup</em> with experiment details (adsorbent, adsorbate, objective).
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 4:</strong> Enter <em>Spectrophotometer</em> standards → click <strong>Calculate Standard Curve</strong> to get regression equation.
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 5:</strong> Enter experimental data in <em>Equilibrium, Isotherm, Kinetics, Thermodynamics</em>.
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 6:</strong> Click <strong>Calculate</strong> in each module → graphs and results appear automatically.
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; border-left: 4px solid var(--accent);">
+      <strong>Step 7:</strong> Go to <em>Model Comparison</em> → check R², RMSE, SSE to select the best statistical fit.
+    </div>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent);">
+      <strong>Step 8:</strong> Get paper-ready summary from <em>Research Summary</em> module — copy & paste into your paper.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-chart-bar"></i> How to Read the Results</div>
+    <p class="text-muted">Every symbol and statistical term explained for beginners:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Symbol</th><th>Meaning</th><th>How to Interpret</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>R²</strong></td><td>Coefficient of determination (goodness of fit)</td><td>1 = perfect. 0.99+ excellent, 0.95–0.99 good, &lt;0.90 poor</td></tr>
+          <tr><td><strong>RMSE</strong></td><td>Root Mean Square Error</td><td>Lower = better fit</td></tr>
+          <tr><td><strong>SSE</strong></td><td>Sum of Squared Errors</td><td>Lower = better fit</td></tr>
+          <tr><td><strong>MAE</strong></td><td>Mean Absolute Error</td><td>Lower = better fit</td></tr>
+          <tr><td><strong>qe / qt</strong></td><td>Adsorption capacity (mg/g)</td><td>Higher = more adsorption</td></tr>
+          <tr><td><strong>qmax</strong></td><td>Maximum capacity (Langmuir)</td><td>Monolayer saturation limit</td></tr>
+          <tr><td><strong>KL</strong></td><td>Langmuir constant (L/mg)</td><td>Higher = stronger binding affinity</td></tr>
+          <tr><td><strong>RL</strong></td><td>Langmuir separation factor</td><td>0 &lt; RL &lt; 1 = favorable</td></tr>
+          <tr><td><strong>KF</strong></td><td>Freundlich constant</td><td>Higher = higher capacity</td></tr>
+          <tr><td><strong>n</strong></td><td>Freundlich exponent</td><td>n&gt;1 favorable, n=1 linear, n&lt;1 unfavorable</td></tr>
+          <tr><td><strong>k1, k2</strong></td><td>Kinetic rate constants</td><td>Higher = faster adsorption</td></tr>
+          <tr><td><strong>kid</strong></td><td>Intraparticle diffusion rate</td><td>Higher = faster pore diffusion</td></tr>
+          <tr><td><strong>ΔG°</strong></td><td>Gibbs free energy (kJ/mol)</td><td>Negative = spontaneous; Positive = non-spontaneous</td></tr>
+          <tr><td><strong>ΔH°</strong></td><td>Enthalpy change (kJ/mol)</td><td>Positive = endothermic; Negative = exothermic</td></tr>
+          <tr><td><strong>ΔS°</strong></td><td>Entropy change (J/mol·K)</td><td>Positive = randomness increases</td></tr>
+          <tr><td><strong>Kd</strong></td><td>Distribution coefficient</td><td>Higher = more adsorbate on solid</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="warning-box">
+    <h4><i class="fas fa-exclamation-triangle" style="color: var(--warn);"></i> Important Notes</h4>
+    <ol style="line-height: 1.9; margin-left: 1.5rem;">
+      <li><strong>Always check units</strong> — mg/L, mg/g, mL, g, kJ/mol, K, min⁻¹</li>
+      <li><strong>Missing values</strong> should be left blank — NOT written as 0</li>
+      <li><strong>Equilibrium time</strong> should only be declared when a plateau is clearly visible</li>
+      <li><strong>Model selection</strong> should not rely on R² alone — consider RMSE, SSE, and parameter plausibility</li>
+      <li><strong>Scientific interpretation</strong> is your responsibility — the tool only does the math</li>
+      <li>For temperature, always use <strong>Kelvin (K)</strong> where required — the tool auto-converts °C → K</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-envelope"></i> Feedback & Contact</div>
+    <p>If you have any issue, suggestion, or collaboration idea, we'd love to hear from you:</p>
+    <p style="text-align: center; margin: 1.2rem 0;">
+      <a href="mailto:arslanenv1@gmail.com?subject=Adsorblab Feedback" 
+         style="background: var(--accent); color: white; padding: 12px 24px;
+                border-radius: 8px; text-decoration: none; font-weight: 600;
+                display: inline-flex; align-items: center; gap: 8px; font-size: 1rem;">
+        <i class="fas fa-paper-plane"></i> arslanenv1@gmail.com
+      </a>
+    </p>
+    <p class="text-muted" style="text-align: center;">Your feedback helps us improve this tool.</p>
+  </div>
+
+  <div class="module-footer">
+    Input → Calculation → Graph → Interpretation
+    <span class="copy">© 2025 Adsorblab | ArslanENV</span>
+  </div>
+</div>
+
+<!-- ═══════════ DEDICATION ═══════════ -->
+<div class="module" id="module-declaration">
+  <h1>📜 Dedication</h1>
+  <div class="subhead">Acknowledgment, ownership, and ethical use notice</div>
+
+  <div class="card" style="border-left: 5px solid var(--accent);">
+    <div class="card-title"><i class="fas fa-file-signature" style="color: var(--accent);"></i> Declaration</div>
+    <p style="font-size: 1rem; line-height: 1.9;">
+      I, <strong>Arslan</strong> (<strong>Adsorblab | ArslanENV</strong>), hereby declare that this
+      <strong>Adsorption Analysis & Research Dashboard</strong> has been designed and developed
+      with the sole intention of helping students, teachers, and researchers perform complete
+      adsorption studies efficiently. All calculations are based on standard scientific formulas
+      derived from peer-reviewed literature.
+    </p>
+    <p style="font-size: 1rem; line-height: 1.9;">
+      This tool is meant for <strong>educational and research purposes only</strong>. It is my
+      sincere hope that it makes adsorption research more accessible to students who may not have
+      access to expensive commercial software.
+    </p>
+    <p style="text-align: right; margin-top: 1.5rem; font-style: italic; color: var(--primary);">
+      — Arslan<br>
+      <span class="text-muted" style="font-style: normal;">Founder, Adsorblab | ArslanENV</span>
+    </p>
+  </div>
+
+  <div class="card" style="border-left: 5px solid var(--primary);">
+    <div class="card-title"><i class="fas fa-heart" style="color: #d94674;"></i> Dedication</div>
+    <p style="font-size: 1rem; line-height: 1.8;">This work is dedicated with sincere gratitude and respect to:</p>
+
+    <h3 style="color: var(--primary); margin-top: 1.2rem;"><i class="fas fa-users"></i> My Parents</h3>
+    <p style="line-height: 1.9;">
+      For their endless support, prayers, sacrifices, and unconditional love.
+      Without their encouragement, this work would not have been possible.
+    </p>
+
+    <h3 style="color: var(--primary); margin-top: 1.5rem;"><i class="fas fa-chalkboard-teacher"></i> My Respected Teachers & Mentors</h3>
+    <div style="background: #f9fcff; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+      <div class="dedication-item"><strong>All Teachers  </strong> : for her invaluable guidance and inspiration</div>
+    </div>
+    <p style="margin-top: 1rem; line-height: 1.9;">
+      Their mentorship has been invaluable, and this work reflects the knowledge and values
+      they have instilled in me.
+    </p>
+
+    <h3 style="color: var(--primary); margin-top: 1.5rem;"><i class="fas fa-flask"></i> Fellow Students & Researchers</h3>
+    <p style="line-height: 1.9;">
+      To all students and researchers who share a passion for environmental science, water
+      treatment, and materials research — may this tool help you in your journey.
+    </p>
+  </div>
+
+  <div class="warning-box" style="border-left-color: var(--warn);">
+    <div class="card-title"><i class="fas fa-shield-alt" style="color: var(--warn);"></i> Ethical Use & Ownership Notice</div>
+
+    <h4>Ethical Use</h4>
+    <p>This application is intended for <strong>ethical use only</strong> in academic, educational, and research settings. It must <strong>NOT</strong> be used for:</p>
+    <ul style="line-height: 1.9; margin-left: 1.5rem;">
+      <li>Fabricating or falsifying scientific data</li>
+      <li>Scientific misconduct of any kind</li>
+      <li>Any activity that violates academic integrity</li>
+    </ul>
+
+    <h4 style="margin-top: 1.2rem;">Ownership & Modification Rights</h4>
+    <p>All rights reserved solely by the owner: <strong>Adsorblab | ArslanENV</strong>.</p>
+    <p><strong>Any alteration, modification, redistribution, or claiming of ownership</strong> without explicit written permission is strictly prohibited.</p>
+
+    <div class="info-box" style="border-left-color: var(--accent); background: var(--accent-light);">
+      <p><strong><i class="fas fa-envelope"></i> Feedback & Contact:</strong></p>
+      <p><a href="mailto:arslanenv1@gmail.com" style="color: var(--primary); font-weight: 700; font-size: 1.05rem;">
+        arslanenv1@gmail.com
+      </a></p>
+      <p class="text-muted">We welcome feedback, bug reports, and collaboration ideas.</p>
+    </div>
+  </div>
+
+  <div class="module-footer">
+    Input → Calculation → Graph → Interpretation
+    <span class="copy">© 2025 Adsorblab | ArslanENV — All rights reserved</span>
+  </div>
+</div>
+
+<!-- ═══════════ SETUP ═══════════ -->
+<div class="module" id="module-setup">
+  <h1>Research Setup</h1>
+  <div class="subhead">Define your experiment metadata — this info appears in the final summary</div>
+  <div class="card">
+    <div class="grid-2">
+      <div class="input-group"><label>Research Title</label><input id="setupTitle" placeholder="e.g. Adsorption of Diclofenac on Biochar"></div>
+      <div class="input-group"><label>Experiment ID</label><input id="setupExpId" placeholder="EXP-001"></div>
+      <div class="input-group"><label>Researcher Name</label><input id="setupResearcher"></div>
+      <div class="input-group"><label>Institution / Lab</label><input id="setupInstitution"></div>
+      <div class="input-group"><label>Date</label><input type="date" id="setupDate"></div>
+      <div class="input-group"><label>Adsorbent Name</label><input id="setupAdsorbent"></div>
+      <div class="input-group"><label>Adsorbent Type</label><input id="setupAdsorbentType"></div>
+      <div class="input-group"><label>Adsorbate / Pollutant</label><input id="setupAdsorbate"></div>
+      <div class="input-group"><label>Solution Name</label><input id="setupSolution"></div>
+      <div class="input-group"><label>Material Type</label><input id="setupMaterialType"></div>
+      <div class="input-group"><label>Particle Size</label><input id="setupParticleSize"></div>
+      <div class="input-group"><label>Activation Method</label><input id="setupActivation"></div>
+      <div class="input-group"><label>Pyrolysis Temperature</label><input id="setupPyrolysis"></div>
+      <div class="input-group"><label>Adsorbent Dose</label><input id="setupDose"></div>
+      <div class="input-group"><label>Initial Concentration Range</label><input id="setupConcRange"></div>
+      <div class="input-group"><label>pH Range</label><input id="setupPhRange"></div>
+      <div class="input-group"><label>Temperature Range</label><input id="setupTempRange"></div>
+      <div class="input-group"><label>Study Material / Application</label><input id="setupMaterialCustom" placeholder="Biochar, Nanoparticle, Clay, Dye, Heavy Metal, etc."></div>
+      <div class="input-group" style="grid-column: span 2;"><label>Experimental Objective</label><textarea id="setupObjective" rows="2"></textarea></div>
+      <div class="input-group" style="grid-column: span 2;"><label>Additional Notes</label><textarea id="setupNotes" rows="2"></textarea></div>
+    </div>
+    <button class="btn-primary" id="saveSetupBtn"><i class="fas fa-save"></i> Save Research Info</button>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ GUIDE ═══════════ -->
+<div class="module" id="module-guide">
+  <h1>General Adsorption Guide</h1>
+  <div class="subhead">What is adsorption and which study is used for what?</div>
+  <div class="card">
+    <h3>What is adsorption?</h3>
+    <p>Adsorption is the adhesion of atoms, ions, or molecules from a gas, liquid, or dissolved solid to a surface. It differs from absorption, where a substance diffuses into a liquid or solid.</p>
+    <ul style="margin-top: 0.8rem; margin-left: 1.2rem; line-height: 1.9;">
+      <li><strong>Adsorbent:</strong> The solid material that provides the surface for adsorption (e.g., biochar, activated carbon).</li>
+      <li><strong>Adsorbate:</strong> The substance that adheres to the adsorbent surface (e.g., dye, metal ion).</li>
+      <li><strong>Desorption:</strong> The reverse process — release of adsorbate from the adsorbent.</li>
+      <li><strong>Surface area & active sites:</strong> Higher surface area and more active sites generally enhance adsorption.</li>
+      <li><strong>Equilibrium:</strong> The state where adsorption and desorption rates are equal.</li>
+      <li><strong>Removal efficiency:</strong> Percentage of adsorbate removed from solution.</li>
+      <li><strong>Adsorption capacity (qe, qt):</strong> Mass of adsorbate adsorbed per mass of adsorbent.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Which study is used for what?</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Study</th><th>Purpose</th><th>Typical Variables</th><th>Models / Parameters</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Equilibrium</strong></td><td>Determine when adsorption reaches equilibrium</td><td>Contact time, Ct, Ce, Removal %, qt</td><td>Equilibrium time, maximum qt</td></tr>
+          <tr><td><strong>Isotherm</strong></td><td>Understand distribution between liquid and solid at equilibrium</td><td>Ce, qe</td><td>Langmuir, Freundlich, Temkin</td></tr>
+          <tr><td><strong>Kinetics</strong></td><td>Understand adsorption rate and mechanism</td><td>t, qt</td><td>PFO, PSO, Intraparticle Diffusion</td></tr>
+          <tr><td><strong>Thermodynamics</strong></td><td>Determine spontaneity and nature of adsorption</td><td>T, Kd</td><td>ΔG°, ΔH°, ΔS°</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ SPECTRO ═══════════ -->
+<div class="module" id="module-spectro">
+  <h1>Spectrophotometer & Standard Curve</h1>
+  <div class="subhead">Calibration and concentration determination</div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-cog"></i> Instrument & Solution</div>
+    <div class="grid-2">
+      <div class="input-group"><label>Instrument Name</label><input id="specInstrument"></div>
+      <div class="input-group"><label>Instrument Model</label><input id="specModel"></div>
+      <div class="input-group"><label>Solution Name</label><input id="specSolution"></div>
+      <div class="input-group"><label>Analyte</label><input id="specAnalyte"></div>
+      <div class="input-group"><label>Wavelength λ (nm)</label><input id="specWavelength" type="number"></div>
+      <div class="input-group"><label>Unit</label><input id="specUnit"></div>
+      <div class="input-group"><label>Blank Absorbance</label><input id="specBlank" type="number" step="any"></div>
+      <div class="input-group"><label>Cuvette Path Length (cm)</label><input id="specPath" type="number" step="any"></div>
+      <div class="input-group"><label>Standard Concentration Unit</label><input id="specConcUnit"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-chart-line"></i> Standard Curve Builder</div>
+    <div class="table-wrap">
+      <table id="standardTable">
+        <thead><tr><th>Standard ID</th><th>Concentration</th><th>Absorbance</th><th></th></tr></thead>
+        <tbody id="standardBody"></tbody>
+      </table>
+    </div>
+    <div class="flex-row">
+      <button id="addStandardBtn"><i class="fas fa-plus"></i> Add Standard</button>
+      <button id="clearStandardBtn" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+      <button id="calcStandardCurveBtn" class="btn-accent"><i class="fas fa-calculator"></i> Calculate Standard Curve</button>
+    </div>
+    <div id="standardCurveResult" class="result-highlight mt-2"></div>
+    <div class="chart-container"><canvas id="standardCurveChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-flask"></i> Sample Analysis</div>
+    <p class="text-muted">Calculated concentration uses: C = (A - b) / m</p>
+    <div class="table-wrap">
+      <table id="sampleTable">
+        <thead><tr><th>Sample ID</th><th>Absorbance</th><th>Calculated Conc.</th><th>Initial Conc.</th><th>Final Conc.</th><th>Removal %</th><th>Adsorption Capacity</th><th></th></tr></thead>
+        <tbody id="sampleBody"></tbody>
+      </table>
+    </div>
+    <div class="flex-row">
+      <button id="addSampleBtn"><i class="fas fa-plus"></i> Add Sample</button>
+      <button id="clearSampleBtn" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+    </div>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ EQUILIBRIUM ═══════════ -->
+<div class="module" id="module-equilibrium">
+  <h1>Equilibrium Study</h1>
+  <div class="subhead">Contact time vs removal efficiency and adsorption capacity</div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="eqTable">
+        <thead><tr><th>Sample ID</th><th>Contact Time (min)</th><th>Co (mg/L)</th><th>Ct (mg/L)</th><th>Dose (g/L)</th><th>Volume (mL)</th><th>pH</th><th>Temp (°C)</th><th>Removal %</th><th>qt (mg/g)</th><th></th></tr></thead>
+        <tbody id="eqBody"></tbody>
+      </table>
+    </div>
+    <div class="flex-row">
+      <button id="addEqRow"><i class="fas fa-plus"></i> Add Row</button>
+      <button id="calcEqBtn" class="btn-accent"><i class="fas fa-calculator"></i> Calculate</button>
+      <button id="clearEqBtn" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Contact Time vs Removal %</div><div class="chart-container"><canvas id="eqChart1"></canvas></div></div>
+    <div class="card"><div class="card-title">Contact Time vs qt</div><div class="chart-container"><canvas id="eqChart2"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-chart-simple"></i> Equilibrium Results</div>
+    <div id="eqResults" class="result-highlight"></div>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ ISOTHERM ═══════════ -->
+<div class="module" id="module-isotherm">
+  <h1>Adsorption Isotherm Study</h1>
+  <div class="subhead">Langmuir, Freundlich, and Temkin models</div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="isoTable">
+        <thead><tr><th>Sample ID</th><th>Co (mg/L)</th><th>Ce (mg/L)</th><th>Dose (g/L)</th><th>Volume (mL)</th><th>pH</th><th>Temp (°C)</th><th>qe (mg/g)</th><th></th></tr></thead>
+        <tbody id="isoBody"></tbody>
+      </table>
+    </div>
+    <div class="flex-row">
+      <button id="addIsoRow"><i class="fas fa-plus"></i> Add Row</button>
+      <button id="calcIsoBtn" class="btn-accent"><i class="fas fa-calculator"></i> Calculate Isotherms</button>
+      <button id="clearIsoBtn" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Langmuir</div><div class="chart-container"><canvas id="langmuirChart"></canvas></div><div id="langmuirResult" class="result-highlight mt-1"></div></div>
+    <div class="card"><div class="card-title">Freundlich</div><div class="chart-container"><canvas id="freundlichChart"></canvas></div><div id="freundlichResult" class="result-highlight mt-1"></div></div>
+  </div>
+  <div class="card"><div class="card-title">Temkin</div><div class="chart-container"><canvas id="temkinChart"></canvas></div><div id="temkinResult" class="result-highlight mt-1"></div></div>
+  <div class="info-box">
+    <strong><i class="fas fa-info-circle"></i> Advanced Models (Optional)</strong>
+    <p class="text-muted mb-1">Dubinin-Radushkevich, Sips, and Redlich-Peterson models can be added in future versions. Currently, the three core models are implemented.</p>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ KINETICS ═══════════ -->
+<div class="module" id="module-kinetics">
+  <h1>Adsorption Kinetics</h1>
+  <div class="subhead">Pseudo-first-order, pseudo-second-order, and intraparticle diffusion</div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="kinTable">
+        <thead><tr><th>Sample ID</th><th>Time (min)</th><th>Co (mg/L)</th><th>Ct (mg/L)</th><th>qt (mg/g)</th><th>Temp (°C)</th><th>pH</th><th>Dose (g/L)</th><th></th></tr></thead>
+        <tbody id="kinBody"></tbody>
+      </table>
+    </div>
+    <div class="flex-row">
+      <button id="addKinRow"><i class="fas fa-plus"></i> Add Row</button>
+      <button id="calcKinBtn" class="btn-accent"><i class="fas fa-calculator"></i> Calculate Kinetics</button>
+      <button id="clearKinBtn" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Pseudo-First-Order (PFO)</div><div class="chart-container"><canvas id="pfoChart"></canvas></div><div id="pfoResult" class="result-highlight mt-1"></div></div>
+    <div class="card"><div class="card-title">Pseudo-Second-Order (PSO)</div><div class="chart-container"><canvas id="psoChart"></canvas></div><div id="psoResult" class="result-highlight mt-1"></div></div>
+  </div>
+  <div class="card"><div class="card-title">Intraparticle Diffusion</div><div class="chart-container"><canvas id="ipdChart"></canvas></div><div id="ipdResult" class="result-highlight mt-1"></div></div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ THERMO ═══════════ -->
+<div class="module" id="module-thermo">
+  <h1>Adsorption Thermodynamics</h1>
+  <div class="subhead">Van't Hoff analysis and Gibbs free energy</div>
+  <div class="card">
+    <div class="flex-row mb-2">
+      <label>Kd definition:</label>
+      <select id="kdDefinition" style="width:auto;">
+        <option value="qe/Ce">Kd = qe / Ce (recommended)</option>
+        <option value="Ce/qe">Kd = Ce / qe (alternative)</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="thermoTable">
+        <thead><tr><th>Sample ID</th><th>Temp (°C)</th><th>Temp (K)</th><th>Co (mg/L)</th><th>Ce (mg/L)</th><th>V (mL)</th><th>m (g)</th><th>qe (mg/g)</th><th>Kd</th><th>ln Kd</th><th>ΔG° (kJ/mol)</th><th></th></tr></thead>
+        <tbody id="thermoBody"></tbody>
+      </table>
+    </div>
+    <div class="flex-row">
+      <button id="addThermoRow"><i class="fas fa-plus"></i> Add Row</button>
+      <button id="calcThermoBtn" class="btn-accent"><i class="fas fa-calculator"></i> Calculate Thermodynamics</button>
+      <button id="clearThermoBtn" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Van't Hoff Plot (ln Kd vs 1/T)</div><div class="chart-container"><canvas id="vantHoffChart"></canvas></div><div id="vantHoffResult" class="result-highlight mt-1"></div></div>
+    <div class="card"><div class="card-title">Temperature vs ΔG°</div><div class="chart-container"><canvas id="gibbsChart"></canvas></div></div>
+  </div>
+  <div class="card"><div class="card-title">Thermodynamic Interpretation</div><div id="thermoInterpretation" class="result-highlight"></div></div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ COMPARE ═══════════ -->
+<div class="module" id="module-compare">
+  <h1>Model Comparison Dashboard</h1>
+  <div class="subhead">Statistical comparison of isotherm and kinetic models</div>
+  <div class="card">
+    <div class="card-title">Isotherm Models</div>
+    <div id="compareIsotherm"></div>
+    <div class="chart-container"><canvas id="compareIsoChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Kinetic Models</div>
+    <div id="compareKinetic"></div>
+    <div class="chart-container"><canvas id="compareKinChart"></canvas></div>
+  </div>
+  <div class="info-box">
+    <strong><i class="fas fa-info-circle"></i> Model Selection Guidance</strong>
+    <p class="text-muted">The "highest R²" or "lowest RMSE" does not automatically mean the best model. Consider parameter plausibility, residuals, and experimental assumptions before final interpretation.</p>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ SUMMARY ═══════════ -->
+<div class="module" id="module-summary">
+  <h1>Overall Research Summary</h1>
+  <div class="subhead">Consolidated results — ready for your paper</div>
+  <div class="card">
+    <div id="summaryContent"></div>
+    <hr>
+    <h3>Research Paper Ready Results</h3>
+    <textarea id="paperSummaryText" rows="8" style="width:100%; font-size:0.9rem; line-height:1.6;"></textarea>
+    <button class="btn-primary mt-1" id="copySummaryBtn"><i class="fas fa-copy"></i> Copy Summary</button>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ FORMULA ═══════════ -->
+<div class="module" id="module-formula">
+  <h1>Formula Reference</h1>
+  <div class="subhead">Searchable database of adsorption equations</div>
+  <div class="card">
+    <input type="search" id="formulaSearch" placeholder="Search formulas, symbols, or keywords..." style="margin-bottom:1rem;">
+    <div id="formulaList"></div>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ EXPERIMENT GUIDE ═══════════ -->
+<div class="module" id="module-experiment">
+  <h1>Experiment Guide for Beginners</h1>
+  <div class="subhead">Step-by-step laboratory workflow</div>
+  <div class="card">
+    <h3>Complete Laboratory Protocol</h3>
+    <ol style="margin-left:1.5rem; line-height:2;">
+      <li><strong>Prepare adsorbent</strong> — washing, drying, sieving, activation</li>
+      <li><strong>Prepare adsorbate stock solution</strong> — accurate concentration</li>
+      <li><strong>Prepare standard solutions</strong> — for calibration curve</li>
+      <li><strong>Run UV-Vis calibration</strong> — determine wavelength λmax</li>
+      <li><strong>Measure samples</strong> — record absorbance values</li>
+      <li><strong>Perform equilibrium study</strong> — vary contact time</li>
+      <li><strong>Perform isotherm experiment</strong> — vary initial concentration</li>
+      <li><strong>Perform kinetic experiment</strong> — record concentration at intervals</li>
+      <li><strong>Perform thermodynamic experiment</strong> — at different temperatures</li>
+      <li><strong>Enter data</strong> into this dashboard</li>
+      <li><strong>Check regression</strong> and residuals</li>
+      <li><strong>Interpret results</strong> using the guide</li>
+      <li><strong>Prepare paper</strong> tables and figures</li>
+    </ol>
+
+    <h3 class="mt-2">Data Required Before Each Study</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Study</th><th>Required Data</th></tr></thead>
+        <tbody>
+          <tr><td>Spectrophotometer</td><td>Standard concentrations + absorbances</td></tr>
+          <tr><td>Equilibrium</td><td>Contact time, Co, Ct, dose, volume</td></tr>
+          <tr><td>Isotherm</td><td>Co, Ce, dose, volume (at equilibrium)</td></tr>
+          <tr><td>Kinetics</td><td>Time, Co, Ct, dose</td></tr>
+          <tr><td>Thermodynamics</td><td>Temperature, Co, Ce, V, mass</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ IMPORT/EXPORT ═══════════ -->
+<div class="module" id="module-importexport">
+  <h1>Data Import / Export</h1>
+  <div class="subhead">Import CSV, export JSON/CSV, print report</div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-download"></i> Export Data</div>
+    <p class="text-muted">Export your current study data to file for backup or sharing.</p>
+    <div class="flex-row">
+      <button id="exportJSONBtn" class="btn-primary"><i class="fas fa-file-code"></i> Export Full Study (JSON)</button>
+      <button id="exportCSVBtn"><i class="fas fa-file-csv"></i> Export Current Module (CSV)</button>
+      <button id="printReportBtn"><i class="fas fa-print"></i> Print Report</button>
+    </div>
+    <div class="mt-2">
+      <label>Select module to export as CSV:</label>
+      <select id="exportModuleSelect">
+        <option value="spectro">Spectrophotometer Standards</option>
+        <option value="equilibrium">Equilibrium</option>
+        <option value="isotherm">Isotherm</option>
+        <option value="kinetics">Kinetics</option>
+        <option value="thermo">Thermodynamics</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-upload"></i> Import CSV Data</div>
+    <p class="text-muted">Upload a CSV file to load experimental data into a specific module.</p>
+    <div class="import-box">
+      <label>1. Select target module:</label>
+      <select id="importModuleSelect">
+        <option value="spectro">Spectrophotometer Standards</option>
+        <option value="equilibrium">Equilibrium</option>
+        <option value="isotherm">Isotherm</option>
+        <option value="kinetics">Kinetics</option>
+        <option value="thermo">Thermodynamics</option>
+      </select>
+      <label style="margin-top:0.8rem;">2. Choose CSV file:</label>
+      <input type="file" id="csvFileInput" accept=".csv,text/csv">
+      <label style="margin-top:0.8rem;">3. Import mode:</label>
+      <select id="importMode">
+        <option value="replace">Replace existing data</option>
+        <option value="append">Append to existing data</option>
+      </select>
+      <div class="flex-row" style="margin-top:1rem;">
+        <button id="doImportBtn" class="btn-accent"><i class="fas fa-file-import"></i> Import CSV</button>
+        <button id="downloadTemplateBtn"><i class="fas fa-file-download"></i> Download Template</button>
+      </div>
+      <div id="importStatus"></div>
+    </div>
+    <div class="mt-2">
+      <p class="text-muted"><strong>Expected CSV headers per module:</strong></p>
+      <ul class="text-muted" style="margin-left:1.5rem;">
+        <li><strong>Spectrophotometer:</strong> Standard ID, Concentration, Absorbance</li>
+        <li><strong>Equilibrium:</strong> Sample ID, Contact Time, Co, Ct, Dose, Volume, pH, Temperature</li>
+        <li><strong>Isotherm:</strong> Sample ID, Co, Ce, Dose, Volume, pH, Temperature</li>
+        <li><strong>Kinetics:</strong> Sample ID, Time, Co, Ct, qt, Temperature, pH, Dose</li>
+        <li><strong>Thermodynamics:</strong> Sample ID, Temperature, Co, Ce, Volume, mass</li>
+      </ul>
+    </div>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ SETTINGS ═══════════ -->
+<div class="module" id="module-settings">
+  <h1>Settings</h1>
+  <div class="subhead">Application preferences and data management</div>
+  <div class="card">
+    <div class="input-group"><label><input type="checkbox" id="autoSaveToggle" checked> Auto-save to localStorage</label></div>
+    <div class="flex-row">
+      <button id="manualSaveBtn" class="btn-primary"><i class="fas fa-save"></i> Manual Save</button>
+      <button id="recalcAllBtn" class="btn-accent"><i class="fas fa-calculator"></i> Recalculate All Modules</button>
+      <button id="clearAllBtn" class="btn-danger"><i class="fas fa-broom"></i> Clear All Studies</button>
+    </div>
+    <div class="warning-box mt-2">
+      <strong><i class="fas fa-exclamation-triangle"></i> Warning:</strong>
+      <p class="text-muted">Clearing all studies will permanently delete your saved data from this browser. Make sure to export a backup (JSON) first.</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="fas fa-info-circle"></i> About</div>
+    <p><strong>Adsorblab | ArslanENV</strong> — Version 1.0 (2025)</p>
+    <p class="text-muted">Adsorption Analysis & Research Dashboard</p>
+    <p class="text-muted">Owner: Arslan (Adsorblab | ArslanENV)</p>
+    <p class="text-muted">Contact: <a href="mailto:arslanenv1@gmail.com" style="color: var(--accent); font-weight: 600;">arslanenv1@gmail.com</a></p>
+  </div>
+  <div class="module-footer">Input → Calculation → Graph → Interpretation</div>
+</div>
+
+<!-- ═══════════ FEEDBACK ═══════════ -->
+<div class="module" id="module-feedback">
+  <h1>Feedback & Contact</h1>
+  <div class="subhead">We value your feedback — help us improve Adsorblab</div>
+
+  <div class="card" style="text-align: center;">
+    <div style="font-size: 3rem; color: var(--accent); margin-bottom: 1rem;">
+      <i class="fas fa-envelope-open-text"></i>
+    </div>
+    <h2 style="margin: 0.5rem 0;">Get in Touch</h2>
+    <p style="font-size: 1.05rem; line-height: 1.8;">
+      Have a suggestion, found a bug, or want to collaborate?
+      We'd love to hear from you.
+    </p>
+    <p style="margin: 1.5rem 0;">
+      <a href="mailto:arslanenv1@gmail.com?subject=Adsorblab Feedback" 
+         style="background: var(--accent); color: white; padding: 14px 28px;
+                border-radius: 8px; text-decoration: none; font-weight: 700;
+                display: inline-flex; align-items: center; gap: 10px; font-size: 1.1rem;">
+        <i class="fas fa-paper-plane"></i> arslanenv1@gmail.com
+      </a>
+    </p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-bug" style="color: var(--danger);"></i> Report a Bug</div>
+      <p class="text-muted">Found something that doesn't work? Tell us:</p>
+      <ul style="margin-left:1.2rem; line-height: 1.9; font-size:0.9rem;">
+        <li>What you were trying to do</li>
+        <li>What happened instead</li>
+        <li>Your browser and OS</li>
+      </ul>
+      <a href="mailto:arslanenv1@gmail.com?subject=Adsorblab Bug Report" 
+         class="btn-primary mt-2" style="text-decoration:none;">
+        <i class="fas fa-bug"></i> Report Bug
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-lightbulb" style="color: var(--warn);"></i> Suggest a Feature</div>
+      <p class="text-muted">Have an idea to make Adsorblab better?</p>
+      <ul style="margin-left:1.2rem; line-height: 1.9; font-size:0.9rem;">
+        <li>New adsorption model</li>
+        <li>Additional graph types</li>
+        <li>Improved UI/UX</li>
+      </ul>
+      <a href="mailto:arslanenv1@gmail.com?subject=Adsorblab Feature Request" 
+         class="btn-primary mt-2" style="text-decoration:none;">
+        <i class="fas fa-lightbulb"></i> Suggest Feature
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-handshake"></i> Collaborate</div>
+    <p>Interested in collaborating on research, education, or development? We welcome:</p>
+    <ul style="margin-left:1.5rem; line-height: 1.9;">
+      <li>Research partnerships</li>
+      <li>Educational institution licensing</li>
+      <li>Feature development</li>
+      <li>Translation to other languages</li>
+    </ul>
+    <a href="mailto:arslanenv1@gmail.com?subject=Adsorblab Collaboration" 
+       class="btn-accent mt-2" style="text-decoration:none;">
+      <i class="fas fa-handshake"></i> Start a Conversation
+    </a>
+  </div>
+
+  <div class="warning-box">
+    <h4><i class="fas fa-shield-alt"></i> Ownership Notice</h4>
+    <p>All rights reserved by <strong>Adsorblab | ArslanENV</strong>. Any alteration, modification, or redistribution without written permission is strictly prohibited.</p>
+  </div>
+
+  <div class="module-footer">
+    Input → Calculation → Graph → Interpretation
+    <span class="copy">© 2025 Adsorblab | ArslanENV — arslanenv1@gmail.com</span>
+  </div>
+</div>
+
+</main>
+
+<!-- FLOATING FEEDBACK BUTTON -->
+<div class="floating-feedback">
+  <a href="mailto:arslanenv1@gmail.com?subject=Adsorblab Feedback">
+    <i class="fas fa-comment-dots"></i> Feedback
+  </a>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GLOBAL DATA
+// ═══════════════════════════════════════════════════════════════
+let studies = [];
+let currentStudyId = null;
+let chartRegistry = {};
+
+// ═══════════════════════════════════════════════════════════════
+// CREATE STUDY WITH PRE-LOADED DEMO DATA
+// ═══════════════════════════════════════════════════════════════
+function createNewStudy(name = 'Study 01: Biochar + Diclofenac', withDemo = true) {
+  const id = 'study_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+  const study = {
+    id, name,
+    setup: withDemo ? {
+      title: 'Adsorption of Diclofenac on Biochar', expId: 'EXP-2024-001',
+      researcher: 'Research Student', institution: 'University Environmental Lab',
+      date: new Date().toISOString().split('T')[0],
+      adsorbent: 'Bambusa vulgaris Biochar', adsorbentType: 'Biochar',
+      adsorbate: 'Diclofenac Potassium', solution: 'Diclofenac Potassium',
+      materialType: 'Biochar', particleSize: '< 0.5 mm',
+      activation: 'Chemical activation (KOH)', pyrolysis: '600 °C',
+      dose: '1 g/L', concRange: '10–100 mg/L', phRange: '2–10', tempRange: '25–55 °C',
+      objective: 'To study adsorption equilibrium, isotherm, kinetics and thermodynamics of Diclofenac removal using biochar.',
+      materialCustom: 'Biochar', notes: 'Demo data pre-loaded for demonstration.'
+    } : {},
+    spectro: {
+      instrument: withDemo ? 'UV-Vis Spectrophotometer' : '',
+      model: withDemo ? 'Shimadzu UV-1800' : '',
+      solution: withDemo ? 'Diclofenac Potassium' : '',
+      analyte: withDemo ? 'Diclofenac' : '',
+      wavelength: withDemo ? '276' : '', unit: withDemo ? 'mg/L' : '',
+      blank: 0.000, pathLength: 1, concUnit: withDemo ? 'mg/L' : '',
+      standards: withDemo ? [
+        { id: 'STD-001', conc: 0,  abs: 0.000 },
+        { id: 'STD-002', conc: 2,  abs: 0.112 },
+        { id: 'STD-003', conc: 4,  abs: 0.228 },
+        { id: 'STD-004', conc: 6,  abs: 0.341 },
+        { id: 'STD-005', conc: 8,  abs: 0.455 },
+        { id: 'STD-006', conc: 10, abs: 0.568 }
+      ] : [],
+      samples: withDemo ? [
+        { id: 'SPEC-001', abs: 0.341, calcConc: null, initialConc: 50, finalConc: null, removal: null, capacity: null },
+        { id: 'SPEC-002', abs: 0.228, calcConc: null, initialConc: 50, finalConc: null, removal: null, capacity: null }
+      ] : [],
+      curve: null
+    },
+    equilibrium: {
+      rows: withDemo ? [
+        { sampleId: 'EQ-001', time: 5,   co: 50, ct: 42.5, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-002', time: 10,  co: 50, ct: 35.2, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-003', time: 15,  co: 50, ct: 28.8, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-004', time: 30,  co: 50, ct: 20.5, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-005', time: 60,  co: 50, ct: 14.2, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-006', time: 90,  co: 50, ct: 11.8, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-007', time: 120, co: 50, ct: 10.5, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-008', time: 180, co: 50, ct: 10.1, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null },
+        { sampleId: 'EQ-009', time: 240, co: 50, ct: 10.0, dose: 1, volume: 100, ph: 6.5, temp: 25, removal: null, qt: null }
+      ] : []
+    },
+    isotherm: {
+      rows: withDemo ? [
+        { sampleId: 'ISO-001', co: 10,  ce: 1.2,  dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null },
+        { sampleId: 'ISO-002', co: 20,  ce: 3.5,  dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null },
+        { sampleId: 'ISO-003', co: 30,  ce: 6.8,  dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null },
+        { sampleId: 'ISO-004', co: 40,  ce: 10.5, dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null },
+        { sampleId: 'ISO-005', co: 50,  ce: 15.2, dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null },
+        { sampleId: 'ISO-006', co: 75,  ce: 28.5, dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null },
+        { sampleId: 'ISO-007', co: 100, ce: 45.8, dose: 1, volume: 100, ph: 6.5, temp: 25, qe: null }
+      ] : [],
+      results: null
+    },
+    kinetics: {
+      rows: withDemo ? [
+        { sampleId: 'KIN-001', time: 5,   co: 50, ct: 42.5, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-002', time: 10,  co: 50, ct: 35.2, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-003', time: 15,  co: 50, ct: 28.8, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-004', time: 30,  co: 50, ct: 20.5, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-005', time: 60,  co: 50, ct: 14.2, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-006', time: 90,  co: 50, ct: 11.8, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-007', time: 120, co: 50, ct: 10.5, qt: null, temp: 25, ph: 6.5, dose: 1 },
+        { sampleId: 'KIN-008', time: 180, co: 50, ct: 10.1, qt: null, temp: 25, ph: 6.5, dose: 1 }
+      ] : [],
+      results: null
+    },
+    thermo: {
+      rows: withDemo ? [
+        { sampleId: 'THERMO-001', tempC: 25, tempK: 298.15, co: 50, ce: 10.5, volume: 100, mass: 0.1, qe: null, Kd: null, lnKd: null, dG: null },
+        { sampleId: 'THERMO-002', tempC: 35, tempK: 308.15, co: 50, ce: 12.8, volume: 100, mass: 0.1, qe: null, Kd: null, lnKd: null, dG: null },
+        { sampleId: 'THERMO-003', tempC: 45, tempK: 318.15, co: 50, ce: 15.2, volume: 100, mass: 0.1, qe: null, Kd: null, lnKd: null, dG: null },
+        { sampleId: 'THERMO-004', tempC: 55, tempK: 328.15, co: 50, ce: 18.5, volume: 100, mass: 0.1, qe: null, Kd: null, lnKd: null, dG: null }
+      ] : [],
+      kdDefinition: 'qe/Ce',
+      results: null
+    },
+    settings: { autoSave: true }
+  };
+  return study;
+}
+
+studies = [createNewStudy()];
+currentStudyId = studies[0].id;
+
+function getCurrentStudy() {
+  return studies.find(s => s.id === currentStudyId) || studies[0];
+}
+
+function saveToLocalStorage() {
+  try { localStorage.setItem('adsorblab_studies', JSON.stringify(studies)); } catch(e) {}
+  updateDashboard();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', function() {
+    const module = this.dataset.module;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+    const target = document.getElementById('module-' + module);
+    if (target) target.classList.add('active');
+    if (window.innerWidth < 900) document.getElementById('sidebar').classList.remove('open');
+
+    // Re-render charts when switching modules
+    if (module === 'dashboard') updateDashboard();
+    if (module === 'compare') updateComparison();
+    if (module === 'summary') updateSummary();
+    if (module === 'spectro') redrawSpectroChart();
+    if (module === 'equilibrium') redrawEqCharts();
+    if (module === 'isotherm') redrawIsoCharts();
+    if (module === 'kinetics') redrawKinCharts();
+    if (module === 'thermo') redrawThermoCharts();
+  });
+});
+
+document.getElementById('hamburger').addEventListener('click', function() {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function updateDashboard() {
+  const study = getCurrentStudy();
+  if (!study) return;
+  const select = document.getElementById('dashboardStudySelect');
+  select.innerHTML = studies.map(s => `<option value="${s.id}" ${s.id === currentStudyId ? 'selected' : ''}>${s.name}</option>`).join('');
+  select.onchange = function() {
+    currentStudyId = this.value;
+    updateDashboard(); loadStudyIntoUI();
+    setTimeout(() => autoCalculateAll(true), 200);
+  };
+
+  document.getElementById('dashboardStats').innerHTML = `
+    <div class="card">
+      <div class="card-title"><i class="fas fa-flask" style="color: var(--accent);"></i> Current Study</div>
+      <div><strong>${study.name}</strong></div>
+      <div class="text-muted">${study.setup.adsorbent || '—'} + ${study.setup.adsorbate || '—'}</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-tag" style="color: var(--accent);"></i> Study Type</div>
+      <div>${study.setup.materialCustom || study.setup.materialType || '—'}</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-chart-line" style="color: var(--accent);"></i> Standard Curve R²</div>
+      <div><strong>${study.spectro.curve ? study.spectro.curve.r2.toFixed(4) : '—'}</strong></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-vials" style="color: var(--accent);"></i> Total Samples</div>
+      <div><strong>${study.equilibrium.rows.length + study.isotherm.rows.length + study.kinetics.rows.length + study.thermo.rows.length}</strong></div>
+    </div>
+  `;
+  document.getElementById('dashboardProgress').innerHTML = `
+    <div class="progress-item"><i class="fas ${study.spectro.curve ? 'fa-check-circle' : 'fa-circle'}"></i> Spectrophotometer ${study.spectro.curve ? '✓ ' + study.spectro.curve.r2.toFixed(4) : ''}</div>
+    <div class="progress-item"><i class="fas ${study.equilibrium.rows.some(r=>r.removal!=null) ? 'fa-check-circle' : 'fa-circle'}"></i> Equilibrium</div>
+    <div class="progress-item"><i class="fas ${study.isotherm.results ? 'fa-check-circle' : 'fa-circle'}"></i> Isotherm</div>
+    <div class="progress-item"><i class="fas ${study.kinetics.results ? 'fa-check-circle' : 'fa-circle'}"></i> Kinetics</div>
+    <div class="progress-item"><i class="fas ${study.thermo.results ? 'fa-check-circle' : 'fa-circle'}"></i> Thermodynamics</div>
+  `;
+}
+
+document.getElementById('newStudyBtn').addEventListener('click', function() {
+  const name = prompt('Enter study name:', 'Study ' + (studies.length + 1));
+  if (name) {
+    const s = createNewStudy(name, false);
+    studies.push(s); currentStudyId = s.id;
+    saveToLocalStorage(); updateDashboard(); loadStudyIntoUI();
+  }
+});
+
+document.getElementById('duplicateStudyBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  if (!study) return;
+  const copy = JSON.parse(JSON.stringify(study));
+  copy.id = 'study_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+  copy.name = study.name + ' (copy)';
+  studies.push(copy); currentStudyId = copy.id;
+  saveToLocalStorage(); updateDashboard(); loadStudyIntoUI();
+  setTimeout(() => autoCalculateAll(true), 200);
+});
+
+document.getElementById('renameStudyBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  if (!study) return;
+  const newName = prompt('Enter new name:', study.name);
+  if (newName) { study.name = newName; saveToLocalStorage(); updateDashboard(); }
+});
+
+document.getElementById('deleteStudyBtn').addEventListener('click', function() {
+  if (studies.length <= 1) { alert('Cannot delete the only study. Create a new one first.'); return; }
+  if (!confirm('Delete current study? This cannot be undone.')) return;
+  studies = studies.filter(s => s.id !== currentStudyId);
+  currentStudyId = studies[0].id;
+  saveToLocalStorage(); updateDashboard(); loadStudyIntoUI();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('saveSetupBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  study.setup = {
+    title: document.getElementById('setupTitle').value,
+    expId: document.getElementById('setupExpId').value,
+    researcher: document.getElementById('setupResearcher').value,
+    institution: document.getElementById('setupInstitution').value,
+    date: document.getElementById('setupDate').value,
+    adsorbent: document.getElementById('setupAdsorbent').value,
+    adsorbentType: document.getElementById('setupAdsorbentType').value,
+    adsorbate: document.getElementById('setupAdsorbate').value,
+    solution: document.getElementById('setupSolution').value,
+    materialType: document.getElementById('setupMaterialType').value,
+    particleSize: document.getElementById('setupParticleSize').value,
+    activation: document.getElementById('setupActivation').value,
+    pyrolysis: document.getElementById('setupPyrolysis').value,
+    dose: document.getElementById('setupDose').value,
+    concRange: document.getElementById('setupConcRange').value,
+    phRange: document.getElementById('setupPhRange').value,
+    tempRange: document.getElementById('setupTempRange').value,
+    objective: document.getElementById('setupObjective').value,
+    materialCustom: document.getElementById('setupMaterialCustom').value,
+    notes: document.getElementById('setupNotes').value,
+  };
+  if (study.setup.title) study.name = study.setup.title;
+  saveToLocalStorage(); updateDashboard();
+  alert('✓ Research info saved successfully.');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// REGRESSION HELPER
+// ═══════════════════════════════════════════════════════════════
+function linearRegression(x, y) {
+  const n = x.length;
+  if (n < 2) return { slope: 0, intercept: 0, r2: 0, rmse: 0, sse: 0, mae: 0 };
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
+  const sumX2 = x.reduce((a, b) => a + b * b, 0);
+  const denom = (n * sumX2 - sumX * sumX);
+  if (denom === 0) return { slope: 0, intercept: 0, r2: 0, rmse: 0, sse: 0, mae: 0 };
+  const slope = (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  const yPred = x.map(xi => slope * xi + intercept);
+  const residuals = y.map((yi, i) => yi - yPred[i]);
+  const sse = residuals.reduce((a, r) => a + r * r, 0);
+  const mae = residuals.reduce((a, r) => a + Math.abs(r), 0) / n;
+  const rmse = Math.sqrt(sse / n);
+  const yMean = sumY / n;
+  const ssTot = y.reduce((a, yi) => a + (yi - yMean) ** 2, 0);
+  const r2 = ssTot === 0 ? 0 : 1 - sse / ssTot;
+  return { slope, intercept, r2, rmse, sse, mae };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHART HELPERS
+// ═══════════════════════════════════════════════════════════════
+function safeDestroyChart(id) {
+  if (chartRegistry[id]) {
+    try { chartRegistry[id].destroy(); } catch(e) {}
+    delete chartRegistry[id];
+  }
+}
+
+function createChart(canvasId, config) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  if (typeof Chart === 'undefined') { console.warn('Chart.js not loaded'); return null; }
+  safeDestroyChart(canvasId);
+  try {
+    const chart = new Chart(canvas.getContext('2d'), config);
+    chartRegistry[canvasId] = chart;
+    return chart;
+  } catch(e) { console.error('Chart error', canvasId, e); return null; }
+}
+
+// Common chart options
+const chartOpts = (xTitle, yTitle) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'top' } },
+  scales: {
+    x: { title: { display: true, text: xTitle, font: { weight: 'bold' } } },
+    y: { title: { display: true, text: yTitle, font: { weight: 'bold' } } }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// SPECTROPHOTOMETER
+// ═══════════════════════════════════════════════════════════════
+function renderStandardRows() {
+  const study = getCurrentStudy();
+  const tbody = document.getElementById('standardBody');
+  tbody.innerHTML = '';
+  study.spectro.standards.forEach((std, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${std.id || ''}" onchange="updateStandard(${i}, 'id', this.value)" style="width:90px;"></td>
+      <td><input type="number" step="any" value="${std.conc ?? ''}" onchange="updateStandard(${i}, 'conc', parseFloat(this.value))" style="width:100px;"></td>
+      <td><input type="number" step="any" value="${std.abs ?? ''}" onchange="updateStandard(${i}, 'abs', parseFloat(this.value))" style="width:100px;"></td>
+      <td><button class="btn-sm btn-danger" onclick="deleteStandard(${i})"><i class="fas fa-times"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.updateStandard = function(i, f, v) {
+  const s = getCurrentStudy();
+  if (s.spectro.standards[i]) { s.spectro.standards[i][f] = v; saveToLocalStorage(); }
+};
+window.deleteStandard = function(i) {
+  const s = getCurrentStudy();
+  s.spectro.standards.splice(i, 1);
+  renderStandardRows(); saveToLocalStorage();
+};
+document.getElementById('addStandardBtn').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  const n = s.spectro.standards.length + 1;
+  s.spectro.standards.push({ id: 'STD-' + String(n).padStart(3, '0'), conc: null, abs: null });
+  renderStandardRows(); saveToLocalStorage();
+});
+document.getElementById('clearStandardBtn').addEventListener('click', function() {
+  if (!confirm('Clear all standard rows?')) return;
+  getCurrentStudy().spectro.standards = [];
+  renderStandardRows(); saveToLocalStorage();
+});
+
+document.getElementById('calcStandardCurveBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  const data = study.spectro.standards.filter(s => s.conc != null && s.abs != null && !isNaN(s.conc) && !isNaN(s.abs));
+  if (data.length < 2) { alert('At least 2 valid data points required.'); return; }
+  const reg = linearRegression(data.map(d => d.conc), data.map(d => d.abs));
+  study.spectro.curve = { slope: reg.slope, intercept: reg.intercept, r2: reg.r2,
+    equation: `A = ${reg.slope.toFixed(4)} × C + ${reg.intercept.toFixed(4)}` };
+  document.getElementById('standardCurveResult').innerHTML = `
+    <strong>Calibration Equation:</strong> ${study.spectro.curve.equation}<br>
+    <strong>R² =</strong> ${reg.r2.toFixed(4)}<br>
+    <strong>Inverse:</strong> C = (A − ${reg.intercept.toFixed(4)}) / ${reg.slope.toFixed(4)}`;
+  drawStandardCurve(data, reg);
+  // update samples
+  study.spectro.samples.forEach(s => {
+    if (s.abs != null) {
+      s.calcConc = (s.abs - study.spectro.curve.intercept) / study.spectro.curve.slope;
+      if (s.initialConc != null && s.calcConc != null && s.initialConc > 0) {
+        s.removal = ((s.initialConc - s.calcConc) / s.initialConc) * 100;
+      }
+    }
+  });
+  renderSampleRows();
+  saveToLocalStorage();
+});
+
+function drawStandardCurve(data, reg) {
+  const xs = data.map(d => d.conc).sort((a, b) => a - b);
+  const lx = [Math.min(...xs), Math.max(...xs)];
+  const ly = lx.map(x => reg.slope * x + reg.intercept);
+  createChart('standardCurveChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Standards', data: data.map(d => ({ x: d.conc, y: d.abs })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'Regression', data: lx.map((x, i) => ({ x, y: ly[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('Concentration (mg/L)', 'Absorbance')
+  });
+}
+
+function redrawSpectroChart() {
+  const s = getCurrentStudy();
+  if (s.spectro.curve && s.spectro.standards.length >= 2) {
+    const data = s.spectro.standards.filter(d => d.conc != null && d.abs != null);
+    const reg = { slope: s.spectro.curve.slope, intercept: s.spectro.curve.intercept };
+    drawStandardCurve(data, reg);
+  }
+}
+
+function renderSampleRows() {
+  const study = getCurrentStudy();
+  const tbody = document.getElementById('sampleBody');
+  tbody.innerHTML = '';
+  study.spectro.samples.forEach((s, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${s.id || ''}" onchange="updateSample(${i}, 'id', this.value)" style="width:80px;"></td>
+      <td><input type="number" step="any" value="${s.abs ?? ''}" onchange="updateSample(${i}, 'abs', parseFloat(this.value))" style="width:90px;"></td>
+      <td class="calc-result">${s.calcConc != null ? s.calcConc.toFixed(4) : '—'}</td>
+      <td><input type="number" step="any" value="${s.initialConc ?? ''}" onchange="updateSample(${i}, 'initialConc', parseFloat(this.value))" style="width:90px;"></td>
+      <td><input type="number" step="any" value="${s.finalConc ?? ''}" onchange="updateSample(${i}, 'finalConc', parseFloat(this.value))" style="width:90px;"></td>
+      <td class="calc-result">${s.removal != null ? s.removal.toFixed(2) + '%' : '—'}</td>
+      <td class="calc-result">${s.capacity != null ? s.capacity.toFixed(4) : '—'}</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteSample(${i})"><i class="fas fa-times"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.updateSample = function(i, f, v) {
+  const s = getCurrentStudy();
+  if (s.spectro.samples[i]) {
+    s.spectro.samples[i][f] = v;
+    const smp = s.spectro.samples[i];
+    if (smp.abs != null && s.spectro.curve) smp.calcConc = (smp.abs - s.spectro.curve.intercept) / s.spectro.curve.slope;
+    if (smp.initialConc != null && smp.calcConc != null && smp.initialConc > 0) smp.removal = ((smp.initialConc - smp.calcConc) / smp.initialConc) * 100;
+    renderSampleRows(); saveToLocalStorage();
+  }
+};
+window.deleteSample = function(i) {
+  const s = getCurrentStudy();
+  s.spectro.samples.splice(i, 1);
+  renderSampleRows(); saveToLocalStorage();
+};
+document.getElementById('addSampleBtn').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  const n = s.spectro.samples.length + 1;
+  s.spectro.samples.push({ id: 'SPEC-' + String(n).padStart(3, '0'), abs: null, calcConc: null, initialConc: null, finalConc: null, removal: null, capacity: null });
+  renderSampleRows(); saveToLocalStorage();
+});
+document.getElementById('clearSampleBtn').addEventListener('click', function() {
+  if (!confirm('Clear all samples?')) return;
+  getCurrentStudy().spectro.samples = [];
+  renderSampleRows(); saveToLocalStorage();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// EQUILIBRIUM
+// ═══════════════════════════════════════════════════════════════
+function renderEqRows() {
+  const s = getCurrentStudy();
+  const tbody = document.getElementById('eqBody');
+  tbody.innerHTML = '';
+  s.equilibrium.rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${r.sampleId || ''}" onchange="updateEq(${i}, 'sampleId', this.value)" style="width:75px;"></td>
+      <td><input type="number" step="any" value="${r.time ?? ''}" onchange="updateEq(${i}, 'time', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.co ?? ''}" onchange="updateEq(${i}, 'co', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.ct ?? ''}" onchange="updateEq(${i}, 'ct', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.dose ?? ''}" onchange="updateEq(${i}, 'dose', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.volume ?? ''}" onchange="updateEq(${i}, 'volume', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.ph ?? ''}" onchange="updateEq(${i}, 'ph', parseFloat(this.value))" style="width:55px;"></td>
+      <td><input type="number" step="any" value="${r.temp ?? ''}" onchange="updateEq(${i}, 'temp', parseFloat(this.value))" style="width:55px;"></td>
+      <td class="calc-result">${r.removal != null ? r.removal.toFixed(2) + '%' : '—'}</td>
+      <td class="calc-result">${r.qt != null ? r.qt.toFixed(4) : '—'}</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteEq(${i})"><i class="fas fa-times"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.updateEq = function(i, f, v) {
+  const s = getCurrentStudy();
+  if (s.equilibrium.rows[i]) {
+    s.equilibrium.rows[i][f] = v;
+    const r = s.equilibrium.rows[i];
+    if (r.co != null && r.ct != null && r.co > 0) r.removal = ((r.co - r.ct) / r.co) * 100;
+    if (r.co != null && r.ct != null && r.dose != null && r.volume != null && r.dose > 0)
+      r.qt = ((r.co - r.ct) * (r.volume / 1000)) / (r.dose / 1000);
+    renderEqRows(); saveToLocalStorage();
+  }
+};
+window.deleteEq = function(i) {
+  const s = getCurrentStudy();
+  s.equilibrium.rows.splice(i, 1);
+  renderEqRows(); saveToLocalStorage();
+};
+document.getElementById('addEqRow').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  const n = s.equilibrium.rows.length + 1;
+  s.equilibrium.rows.push({ sampleId: 'EQ-' + String(n).padStart(3, '0'), time: null, co: null, ct: null, dose: null, volume: null, ph: null, temp: null, removal: null, qt: null });
+  renderEqRows(); saveToLocalStorage();
+});
+document.getElementById('clearEqBtn').addEventListener('click', function() {
+  if (!confirm('Clear all equilibrium rows?')) return;
+  getCurrentStudy().equilibrium.rows = [];
+  renderEqRows(); saveToLocalStorage();
+});
+document.getElementById('calcEqBtn').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  s.equilibrium.rows.forEach(r => {
+    if (r.co != null && r.ct != null && r.co > 0) r.removal = ((r.co - r.ct) / r.co) * 100;
+    if (r.co != null && r.ct != null && r.dose != null && r.volume != null && r.dose > 0)
+      r.qt = ((r.co - r.ct) * (r.volume / 1000)) / (r.dose / 1000);
+  });
+  renderEqRows(); drawEqCharts();
+  const valid = s.equilibrium.rows.filter(r => r.removal != null && r.qt != null);
+  if (valid.length > 0) {
+    const maxRem = Math.max(...valid.map(r => r.removal));
+    const maxQt = Math.max(...valid.map(r => r.qt));
+    const eqTime = valid[valid.length - 1].time;
+    document.getElementById('eqResults').innerHTML = `
+      <strong>Maximum Removal:</strong> ${maxRem.toFixed(2)}%<br>
+      <strong>Maximum qt:</strong> ${maxQt.toFixed(4)} mg/g<br>
+      <strong>Equilibrium Time (observed):</strong> ~${eqTime} min`;
+  }
+  saveToLocalStorage();
+});
+function drawEqCharts() {
+  const s = getCurrentStudy();
+  const rows = s.equilibrium.rows.filter(r => r.time != null && r.removal != null && r.qt != null);
+  if (rows.length === 0) return;
+  const times = rows.map(r => r.time);
+  createChart('eqChart1', {
+    type: 'line',
+    data: { labels: times, datasets: [{ label: 'Removal %', data: rows.map(r => r.removal), borderColor: '#2a7f6e', backgroundColor: 'rgba(42,127,110,0.15)', pointRadius: 5, tension: 0.1, fill: true }] },
+    options: chartOpts('Contact Time (min)', 'Removal %')
+  });
+  createChart('eqChart2', {
+    type: 'line',
+    data: { labels: times, datasets: [{ label: 'qt (mg/g)', data: rows.map(r => r.qt), borderColor: '#1e4a6b', backgroundColor: 'rgba(30,74,107,0.15)', pointRadius: 5, tension: 0.1, fill: true }] },
+    options: chartOpts('Contact Time (min)', 'qt (mg/g)')
+  });
+}
+function redrawEqCharts() { drawEqCharts(); }
+
+// ═══════════════════════════════════════════════════════════════
+// ISOTHERM
+// ═══════════════════════════════════════════════════════════════
+function renderIsoRows() {
+  const s = getCurrentStudy();
+  const tbody = document.getElementById('isoBody');
+  tbody.innerHTML = '';
+  s.isotherm.rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${r.sampleId || ''}" onchange="updateIso(${i}, 'sampleId', this.value)" style="width:75px;"></td>
+      <td><input type="number" step="any" value="${r.co ?? ''}" onchange="updateIso(${i}, 'co', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.ce ?? ''}" onchange="updateIso(${i}, 'ce', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.dose ?? ''}" onchange="updateIso(${i}, 'dose', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.volume ?? ''}" onchange="updateIso(${i}, 'volume', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.ph ?? ''}" onchange="updateIso(${i}, 'ph', parseFloat(this.value))" style="width:55px;"></td>
+      <td><input type="number" step="any" value="${r.temp ?? ''}" onchange="updateIso(${i}, 'temp', parseFloat(this.value))" style="width:55px;"></td>
+      <td class="calc-result">${r.qe != null ? r.qe.toFixed(4) : '—'}</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteIso(${i})"><i class="fas fa-times"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.updateIso = function(i, f, v) {
+  const s = getCurrentStudy();
+  if (s.isotherm.rows[i]) {
+    s.isotherm.rows[i][f] = v;
+    const r = s.isotherm.rows[i];
+    if (r.co != null && r.ce != null && r.dose != null && r.volume != null && r.dose > 0)
+      r.qe = ((r.co - r.ce) * (r.volume / 1000)) / (r.dose / 1000);
+    renderIsoRows(); saveToLocalStorage();
+  }
+};
+window.deleteIso = function(i) {
+  const s = getCurrentStudy();
+  s.isotherm.rows.splice(i, 1);
+  renderIsoRows(); saveToLocalStorage();
+};
+document.getElementById('addIsoRow').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  const n = s.isotherm.rows.length + 1;
+  s.isotherm.rows.push({ sampleId: 'ISO-' + String(n).padStart(3, '0'), co: null, ce: null, dose: null, volume: null, ph: null, temp: null, qe: null });
+  renderIsoRows(); saveToLocalStorage();
+});
+document.getElementById('clearIsoBtn').addEventListener('click', function() {
+  if (!confirm('Clear all isotherm rows?')) return;
+  getCurrentStudy().isotherm.rows = [];
+  renderIsoRows(); saveToLocalStorage();
+});
+
+document.getElementById('calcIsoBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  study.isotherm.rows.forEach(r => {
+    if (r.qe == null && r.co != null && r.ce != null && r.dose != null && r.volume != null && r.dose > 0)
+      r.qe = ((r.co - r.ce) * (r.volume / 1000)) / (r.dose / 1000);
+  });
+  renderIsoRows();
+  const rows = study.isotherm.rows.filter(r => r.ce != null && r.qe != null && r.ce > 0 && r.qe > 0);
+  if (rows.length < 3) { alert('At least 3 valid data points required for isotherm regression.'); return; }
+
+  // Langmuir
+  const langmuirData = rows.map(r => ({ x: r.ce, y: r.ce / r.qe }));
+  const lr = linearRegression(langmuirData.map(d => d.x), langmuirData.map(d => d.y));
+  const qmax = 1 / lr.slope;
+  const KL = lr.slope / lr.intercept;
+  document.getElementById('langmuirResult').innerHTML = `
+    <strong>qmax =</strong> ${qmax.toFixed(4)} mg/g<br>
+    <strong>KL =</strong> ${KL.toFixed(4)} L/mg<br>
+    <strong>R² =</strong> ${lr.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (Ce/qe vs Ce)</span>`;
+  drawLangmuir(rows, qmax, KL);
+
+  // Freundlich
+  const freundlichData = rows.map(r => ({ x: Math.log10(r.ce), y: Math.log10(r.qe) }));
+  const fr = linearRegression(freundlichData.map(d => d.x), freundlichData.map(d => d.y));
+  const KF = Math.pow(10, fr.intercept);
+  const n = 1 / fr.slope;
+  document.getElementById('freundlichResult').innerHTML = `
+    <strong>KF =</strong> ${KF.toFixed(4)}<br>
+    <strong>n =</strong> ${n.toFixed(4)}<br>
+    <strong>1/n =</strong> ${fr.slope.toFixed(4)}<br>
+    <strong>R² =</strong> ${fr.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (log qe vs log Ce)</span>`;
+  drawFreundlich(rows, KF, n);
+
+  // Temkin
+  const temkinData = rows.map(r => ({ x: Math.log(r.ce), y: r.qe }));
+  const tr = linearRegression(temkinData.map(d => d.x), temkinData.map(d => d.y));
+  const B = tr.slope;
+  const KT = Math.exp(tr.intercept / B);
+  document.getElementById('temkinResult').innerHTML = `
+    <strong>B =</strong> ${B.toFixed(4)}<br>
+    <strong>KT =</strong> ${KT.toFixed(4)}<br>
+    <strong>R² =</strong> ${tr.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (qe vs ln Ce)</span>`;
+  drawTemkin(rows, B, KT);
+
+  study.isotherm.results = {
+    langmuir: { qmax, KL, r2: lr.r2 },
+    freundlich: { KF, n, r2: fr.r2 },
+    temkin: { B, KT, r2: tr.r2 }
+  };
+  saveToLocalStorage();
+});
+
+function drawLangmuir(rows, qmax, KL) {
+  const ceVals = rows.map(r => r.ce).sort((a, b) => a - b);
+  const qePred = ceVals.map(ce => (qmax * KL * ce) / (1 + KL * ce));
+  createChart('langmuirChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: r.ce, y: r.qe })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'Langmuir fit', data: ceVals.map((x, i) => ({ x, y: qePred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('Ce (mg/L)', 'qe (mg/g)')
+  });
+}
+function drawFreundlich(rows, KF, n) {
+  const ceVals = rows.map(r => r.ce).sort((a, b) => a - b);
+  const qePred = ceVals.map(ce => KF * Math.pow(ce, 1 / n));
+  createChart('freundlichChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: r.ce, y: r.qe })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'Freundlich fit', data: ceVals.map((x, i) => ({ x, y: qePred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('Ce (mg/L)', 'qe (mg/g)')
+  });
+}
+function drawTemkin(rows, B, KT) {
+  const ceVals = rows.map(r => r.ce).sort((a, b) => a - b);
+  const qePred = ceVals.map(ce => B * Math.log(KT * ce));
+  createChart('temkinChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: r.ce, y: r.qe })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'Temkin fit', data: ceVals.map((x, i) => ({ x, y: qePred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('Ce (mg/L)', 'qe (mg/g)')
+  });
+}
+function redrawIsoCharts() {
+  const s = getCurrentStudy();
+  if (!s.isotherm.results) return;
+  const rows = s.isotherm.rows.filter(r => r.ce != null && r.qe != null && r.ce > 0 && r.qe > 0);
+  if (rows.length < 3) return;
+  const r = s.isotherm.results;
+  drawLangmuir(rows, r.langmuir.qmax, r.langmuir.KL);
+  drawFreundlich(rows, r.freundlich.KF, r.freundlich.n);
+  drawTemkin(rows, r.temkin.B, r.temkin.KT);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KINETICS
+// ═══════════════════════════════════════════════════════════════
+function renderKinRows() {
+  const s = getCurrentStudy();
+  const tbody = document.getElementById('kinBody');
+  tbody.innerHTML = '';
+  s.kinetics.rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${r.sampleId || ''}" onchange="updateKin(${i}, 'sampleId', this.value)" style="width:75px;"></td>
+      <td><input type="number" step="any" value="${r.time ?? ''}" onchange="updateKin(${i}, 'time', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.co ?? ''}" onchange="updateKin(${i}, 'co', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.ct ?? ''}" onchange="updateKin(${i}, 'ct', parseFloat(this.value))" style="width:65px;"></td>
+      <td class="calc-result">${r.qt != null ? r.qt.toFixed(4) : '—'}</td>
+      <td><input type="number" step="any" value="${r.temp ?? ''}" onchange="updateKin(${i}, 'temp', parseFloat(this.value))" style="width:55px;"></td>
+      <td><input type="number" step="any" value="${r.ph ?? ''}" onchange="updateKin(${i}, 'ph', parseFloat(this.value))" style="width:55px;"></td>
+      <td><input type="number" step="any" value="${r.dose ?? ''}" onchange="updateKin(${i}, 'dose', parseFloat(this.value))" style="width:65px;"></td>
+      <td><button class="btn-sm btn-danger" onclick="deleteKin(${i})"><i class="fas fa-times"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.updateKin = function(i, f, v) {
+  const s = getCurrentStudy();
+  if (s.kinetics.rows[i]) {
+    s.kinetics.rows[i][f] = v;
+    const r = s.kinetics.rows[i];
+    if (r.co != null && r.ct != null && r.dose != null && r.dose > 0)
+      r.qt = ((r.co - r.ct) * 0.1) / (r.dose / 1000);
+    renderKinRows(); saveToLocalStorage();
+  }
+};
+window.deleteKin = function(i) {
+  const s = getCurrentStudy();
+  s.kinetics.rows.splice(i, 1);
+  renderKinRows(); saveToLocalStorage();
+};
+document.getElementById('addKinRow').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  const n = s.kinetics.rows.length + 1;
+  s.kinetics.rows.push({ sampleId: 'KIN-' + String(n).padStart(3, '0'), time: null, co: null, ct: null, qt: null, temp: null, ph: null, dose: null });
+  renderKinRows(); saveToLocalStorage();
+});
+document.getElementById('clearKinBtn').addEventListener('click', function() {
+  if (!confirm('Clear all kinetics rows?')) return;
+  getCurrentStudy().kinetics.rows = [];
+  renderKinRows(); saveToLocalStorage();
+});
+
+document.getElementById('calcKinBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  study.kinetics.rows.forEach(r => {
+    if (r.co != null && r.ct != null && r.dose != null && r.dose > 0)
+      r.qt = ((r.co - r.ct) * 0.1) / (r.dose / 1000);
+  });
+  renderKinRows();
+  const rows = study.kinetics.rows.filter(r => r.time != null && r.qt != null && r.time > 0 && r.qt > 0);
+  if (rows.length < 3) { alert('At least 3 valid data points required.'); return; }
+
+  const qeExp = Math.max(...rows.map(r => r.qt));
+
+  // PFO
+  const pfoData = rows.map(r => ({ x: r.time, y: Math.log(Math.max(qeExp - r.qt, 1e-9)) }));
+  const pfoReg = linearRegression(pfoData.map(d => d.x), pfoData.map(d => d.y));
+  const k1 = -pfoReg.slope;
+  const qePFO = Math.exp(pfoReg.intercept);
+  document.getElementById('pfoResult').innerHTML = `
+    <strong>qe (calc) =</strong> ${qePFO.toFixed(4)} mg/g<br>
+    <strong>k1 =</strong> ${k1.toFixed(4)} min⁻¹<br>
+    <strong>R² =</strong> ${pfoReg.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (ln(qe−qt) vs t)</span>`;
+  drawPFO(rows, qePFO, k1);
+
+  // PSO
+  const psoData = rows.map(r => ({ x: r.time, y: r.time / r.qt }));
+  const psoReg = linearRegression(psoData.map(d => d.x), psoData.map(d => d.y));
+  const qePSO = 1 / psoReg.slope;
+  const k2 = (psoReg.slope ** 2) / psoReg.intercept;
+  document.getElementById('psoResult').innerHTML = `
+    <strong>qe (calc) =</strong> ${qePSO.toFixed(4)} mg/g<br>
+    <strong>k2 =</strong> ${k2.toFixed(4)} g/mg·min<br>
+    <strong>R² =</strong> ${psoReg.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (t/qt vs t)</span>`;
+  drawPSO(rows, qePSO, k2);
+
+  // IPD
+  const ipdData = rows.map(r => ({ x: Math.sqrt(r.time), y: r.qt }));
+  const ipdReg = linearRegression(ipdData.map(d => d.x), ipdData.map(d => d.y));
+  document.getElementById('ipdResult').innerHTML = `
+    <strong>kid =</strong> ${ipdReg.slope.toFixed(4)}<br>
+    <strong>C =</strong> ${ipdReg.intercept.toFixed(4)}<br>
+    <strong>R² =</strong> ${ipdReg.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (qt vs √t)</span>`;
+  drawIPD(rows, ipdReg.slope, ipdReg.intercept);
+
+  study.kinetics.results = {
+    pfo: { qe: qePFO, k1, r2: pfoReg.r2 },
+    pso: { qe: qePSO, k2, r2: psoReg.r2 },
+    ipd: { kid: ipdReg.slope, C: ipdReg.intercept, r2: ipdReg.r2 }
+  };
+  saveToLocalStorage();
+});
+
+function drawPFO(rows, qe, k1) {
+  const tVals = rows.map(r => r.time).sort((a, b) => a - b);
+  const qtPred = tVals.map(t => qe * (1 - Math.exp(-k1 * t)));
+  createChart('pfoChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: r.time, y: r.qt })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'PFO fit', data: tVals.map((x, i) => ({ x, y: qtPred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('Time (min)', 'qt (mg/g)')
+  });
+}
+function drawPSO(rows, qe, k2) {
+  const tVals = rows.map(r => r.time).sort((a, b) => a - b);
+  const qtPred = tVals.map(t => (k2 * qe * qe * t) / (1 + k2 * qe * t));
+  createChart('psoChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: r.time, y: r.qt })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'PSO fit', data: tVals.map((x, i) => ({ x, y: qtPred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('Time (min)', 'qt (mg/g)')
+  });
+}
+function drawIPD(rows, kid, C) {
+  const sqrtTVals = rows.map(r => Math.sqrt(r.time)).sort((a, b) => a - b);
+  const qtPred = sqrtTVals.map(s => kid * s + C);
+  createChart('ipdChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: Math.sqrt(r.time), y: r.qt })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: 'IPD fit', data: sqrtTVals.map((x, i) => ({ x, y: qtPred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('√t (min^0.5)', 'qt (mg/g)')
+  });
+}
+function redrawKinCharts() {
+  const s = getCurrentStudy();
+  if (!s.kinetics.results) return;
+  const rows = s.kinetics.rows.filter(r => r.time != null && r.qt != null && r.time > 0 && r.qt > 0);
+  if (rows.length < 3) return;
+  const r = s.kinetics.results;
+  drawPFO(rows, r.pfo.qe, r.pfo.k1);
+  drawPSO(rows, r.pso.qe, r.pso.k2);
+  drawIPD(rows, r.ipd.kid, r.ipd.C);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// THERMODYNAMICS
+// ═══════════════════════════════════════════════════════════════
+function renderThermoRows() {
+  const s = getCurrentStudy();
+  const tbody = document.getElementById('thermoBody');
+  tbody.innerHTML = '';
+  s.thermo.rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${r.sampleId || ''}" onchange="updateThermo(${i}, 'sampleId', this.value)" style="width:85px;"></td>
+      <td><input type="number" step="any" value="${r.tempC ?? ''}" onchange="updateThermo(${i}, 'tempC', parseFloat(this.value))" style="width:65px;"></td>
+      <td class="calc-result">${r.tempK != null ? r.tempK.toFixed(2) : '—'}</td>
+      <td><input type="number" step="any" value="${r.co ?? ''}" onchange="updateThermo(${i}, 'co', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.ce ?? ''}" onchange="updateThermo(${i}, 'ce', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.volume ?? ''}" onchange="updateThermo(${i}, 'volume', parseFloat(this.value))" style="width:65px;"></td>
+      <td><input type="number" step="any" value="${r.mass ?? ''}" onchange="updateThermo(${i}, 'mass', parseFloat(this.value))" style="width:65px;"></td>
+      <td class="calc-result">${r.qe != null ? r.qe.toFixed(4) : '—'}</td>
+      <td class="calc-result">${r.Kd != null ? r.Kd.toFixed(4) : '—'}</td>
+      <td class="calc-result">${r.lnKd != null ? r.lnKd.toFixed(4) : '—'}</td>
+      <td class="calc-result">${r.dG != null ? r.dG.toFixed(2) : '—'}</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteThermo(${i})"><i class="fas fa-times"></i></button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.updateThermo = function(i, f, v) {
+  const s = getCurrentStudy();
+  if (s.thermo.rows[i]) {
+    s.thermo.rows[i][f] = v;
+    const r = s.thermo.rows[i];
+    if (r.tempC != null) r.tempK = r.tempC + 273.15;
+    if (r.co != null && r.ce != null && r.volume != null && r.mass != null && r.mass > 0)
+      r.qe = ((r.co - r.ce) * (r.volume / 1000)) / (r.mass / 1000);
+    if (r.qe != null && r.ce != null && r.ce > 0) {
+      r.Kd = r.qe / r.ce;
+      r.lnKd = Math.log(r.Kd);
+      if (r.tempK != null) r.dG = -8.314 * r.tempK * r.lnKd / 1000;
+    }
+    renderThermoRows(); saveToLocalStorage();
+  }
+};
+window.deleteThermo = function(i) {
+  const s = getCurrentStudy();
+  s.thermo.rows.splice(i, 1);
+  renderThermoRows(); saveToLocalStorage();
+};
+document.getElementById('addThermoRow').addEventListener('click', function() {
+  const s = getCurrentStudy();
+  const n = s.thermo.rows.length + 1;
+  s.thermo.rows.push({ sampleId: 'THERMO-' + String(n).padStart(3, '0'), tempC: null, tempK: null, co: null, ce: null, volume: null, mass: null, qe: null, Kd: null, lnKd: null, dG: null });
+  renderThermoRows(); saveToLocalStorage();
+});
+document.getElementById('clearThermoBtn').addEventListener('click', function() {
+  if (!confirm('Clear all thermodynamics rows?')) return;
+  getCurrentStudy().thermo.rows = [];
+  renderThermoRows(); saveToLocalStorage();
+});
+
+document.getElementById('calcThermoBtn').addEventListener('click', function() {
+  const study = getCurrentStudy();
+  study.thermo.rows.forEach(r => {
+    if (r.tempC != null) r.tempK = r.tempC + 273.15;
+    if (r.co != null && r.ce != null && r.volume != null && r.mass != null && r.mass > 0)
+      r.qe = ((r.co - r.ce) * (r.volume / 1000)) / (r.mass / 1000);
+    if (r.qe != null && r.ce != null && r.ce > 0) {
+      r.Kd = r.qe / r.ce;
+      r.lnKd = Math.log(r.Kd);
+      if (r.tempK != null) r.dG = -8.314 * r.tempK * r.lnKd / 1000;
+    }
+  });
+  renderThermoRows();
+  const rows = study.thermo.rows.filter(r => r.tempK != null && r.Kd != null && r.Kd > 0 && r.tempK > 0);
+  if (rows.length < 2) { alert('At least 2 valid data points required for Van\'t Hoff regression.'); return; }
+
+  const vantData = rows.map(r => ({ x: 1 / r.tempK, y: r.lnKd }));
+  const vantReg = linearRegression(vantData.map(d => d.x), vantData.map(d => d.y));
+  const dH = -vantReg.slope * 8.314 / 1000;
+  const dS = vantReg.intercept * 8.314 / 1000;
+
+  document.getElementById('vantHoffResult').innerHTML = `
+    <strong>ΔH° =</strong> ${dH.toFixed(2)} kJ/mol<br>
+    <strong>ΔS° =</strong> ${dS.toFixed(2)} J/mol·K<br>
+    <strong>R² =</strong> ${vantReg.r2.toFixed(4)}<br>
+    <span class="text-muted">Linear regression (ln Kd vs 1/T)</span>`;
+  drawVantHoff(rows, vantReg.slope, vantReg.intercept);
+  drawGibbs(rows);
+
+  const avgDG = rows.reduce((sum, r) => sum + r.dG, 0) / rows.length;
+  let interp = '';
+  interp += dH > 0 ? '<strong>Endothermic</strong> (ΔH° positive).<br>' : '<strong>Exothermic</strong> (ΔH° negative).<br>';
+  interp += dS > 0 ? '<strong>Increase in entropy</strong> (ΔS° positive).<br>' : '<strong>Decrease in entropy</strong> (ΔS° negative).<br>';
+  interp += avgDG < 0 ? '<strong>Average ΔG° negative</strong> → spontaneous under studied conditions.<br>' : '<strong>Average ΔG° positive</strong> → non-spontaneous.<br>';
+  interp += '<span class="text-muted">Disclaimer: Thermodynamic interpretation depends on Kd definition and standard-state treatment.</span>';
+  document.getElementById('thermoInterpretation').innerHTML = interp;
+
+  study.thermo.results = { dH, dS, vantR2: vantReg.r2, avgDG };
+  saveToLocalStorage();
+});
+
+function drawVantHoff(rows, slope, intercept) {
+  const invT = rows.map(r => 1 / r.tempK).sort((a, b) => a - b);
+  const lnKdPred = invT.map(x => slope * x + intercept);
+  createChart('vantHoffChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Experimental', data: rows.map(r => ({ x: 1 / r.tempK, y: r.lnKd })), backgroundColor: '#2a7f6e', pointRadius: 7 },
+      { label: "Van't Hoff fit", data: invT.map((x, i) => ({ x, y: lnKdPred[i] })), type: 'line', borderColor: '#1e4a6b', borderWidth: 2, fill: false, pointRadius: 0 }
+    ]},
+    options: chartOpts('1/T (K⁻¹)', 'ln Kd')
+  });
+}
+function drawGibbs(rows) {
+  const sorted = [...rows].sort((a, b) => a.tempK - b.tempK);
+  createChart('gibbsChart', {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'ΔG° vs T', data: sorted.map(r => ({ x: r.tempK, y: r.dG })), backgroundColor: '#1e4a6b', pointRadius: 7, showLine: true, borderColor: '#1e4a6b' }
+    ]},
+    options: chartOpts('Temperature (K)', 'ΔG° (kJ/mol)')
+  });
+}
+function redrawThermoCharts() {
+  const s = getCurrentStudy();
+  if (!s.thermo.results) return;
+  const rows = s.thermo.rows.filter(r => r.tempK != null && r.Kd != null && r.Kd > 0 && r.tempK > 0);
+  if (rows.length < 2) return;
+  const vantData = rows.map(r => ({ x: 1 / r.tempK, y: r.lnKd }));
+  const vantReg = linearRegression(vantData.map(d => d.x), vantData.map(d => d.y));
+  drawVantHoff(rows, vantReg.slope, vantReg.intercept);
+  drawGibbs(rows);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOAD STUDY INTO UI
+// ═══════════════════════════════════════════════════════════════
+function loadStudyIntoUI() {
+  const study = getCurrentStudy();
+  if (!study) return;
+  const fields = ['title','expId','researcher','institution','date','adsorbent','adsorbentType','adsorbate','solution','materialType','particleSize','activation','pyrolysis','dose','concRange','phRange','tempRange','objective','materialCustom','notes'];
+  fields.forEach(f => {
+    const el = document.getElementById('setup' + f.charAt(0).toUpperCase() + f.slice(1));
+    if (el) el.value = study.setup[f] || '';
+  });
+
+  const specFields = ['instrument','model','solution','analyte','wavelength','unit','blank','pathLength','concUnit'];
+  specFields.forEach(f => {
+    const el = document.getElementById('spec' + f.charAt(0).toUpperCase() + f.slice(1));
+    if (el) el.value = study.spectro[f] || '';
+  });
+
+  renderStandardRows(); renderSampleRows(); renderEqRows(); renderIsoRows(); renderKinRows(); renderThermoRows();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODEL COMPARISON
+// ═══════════════════════════════════════════════════════════════
+function updateComparison() {
+  const study = getCurrentStudy();
+  const isoDiv = document.getElementById('compareIsotherm');
+  const kinDiv = document.getElementById('compareKinetic');
+
+  if (study.isotherm.results) {
+    const r = study.isotherm.results;
+    isoDiv.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Model</th><th>R²</th><th>Parameters</th></tr></thead>
+      <tbody>
+        <tr><td>Langmuir</td><td>${r.langmuir.r2.toFixed(4)}</td><td>qmax=${r.langmuir.qmax.toFixed(3)}, KL=${r.langmuir.KL.toFixed(4)}</td></tr>
+        <tr><td>Freundlich</td><td>${r.freundlich.r2.toFixed(4)}</td><td>KF=${r.freundlich.KF.toFixed(3)}, n=${r.freundlich.n.toFixed(3)}</td></tr>
+        <tr><td>Temkin</td><td>${r.temkin.r2.toFixed(4)}</td><td>B=${r.temkin.B.toFixed(3)}, KT=${r.temkin.KT.toFixed(3)}</td></tr>
+      </tbody></table></div>`;
+    drawCompareChart('compareIsoChart', ['Langmuir', 'Freundlich', 'Temkin'],
+      [r.langmuir.r2, r.freundlich.r2, r.temkin.r2], 'Isotherm Model R² Comparison');
+  } else {
+    isoDiv.innerHTML = '<p class="text-muted">Calculate isotherm models first (go to Isotherm Study module).</p>';
+  }
+
+  if (study.kinetics.results) {
+    const r = study.kinetics.results;
+    kinDiv.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Model</th><th>R²</th><th>Parameters</th></tr></thead>
+      <tbody>
+        <tr><td>PFO</td><td>${r.pfo.r2.toFixed(4)}</td><td>qe=${r.pfo.qe.toFixed(3)}, k1=${r.pfo.k1.toFixed(4)}</td></tr>
+        <tr><td>PSO</td><td>${r.pso.r2.toFixed(4)}</td><td>qe=${r.pso.qe.toFixed(3)}, k2=${r.pso.k2.toFixed(4)}</td></tr>
+        <tr><td>IPD</td><td>${r.ipd.r2.toFixed(4)}</td><td>kid=${r.ipd.kid.toFixed(4)}, C=${r.ipd.C.toFixed(3)}</td></tr>
+      </tbody></table></div>`;
+    drawCompareChart('compareKinChart', ['PFO', 'PSO', 'IPD'],
+      [r.pfo.r2, r.pso.r2, r.ipd.r2], 'Kinetic Model R² Comparison');
+  } else {
+    kinDiv.innerHTML = '<p class="text-muted">Calculate kinetic models first (go to Kinetics Study module).</p>';
+  }
+}
+
+function drawCompareChart(id, labels, data, title) {
+  createChart(id, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'R²', data, backgroundColor: ['#2a7f6e', '#1e4a6b', '#4a90a4'] }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { title: { display: true, text: title, font: { size: 14, weight: 'bold' } } },
+      scales: { y: { beginAtZero: true, max: 1, title: { display: true, text: 'R²' } } }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════════════════════════════
+function updateSummary() {
+  const study = getCurrentStudy();
+  const div = document.getElementById('summaryContent');
+  const eq = study.equilibrium.rows.filter(r => r.removal != null);
+  const maxRem = eq.length ? Math.max(...eq.map(r => r.removal)) : null;
+  const maxQt = eq.length ? Math.max(...eq.map(r => r.qt)) : null;
+  const iso = study.isotherm.results || {};
+  const kin = study.kinetics.results || {};
+  const th = study.thermo.results || {};
+
+  div.innerHTML = `
+    <h3>Research Information</h3>
+    <p><strong>Title:</strong> ${study.setup.title || '—'}</p>
+    <p><strong>Adsorbent:</strong> ${study.setup.adsorbent || '—'} (${study.setup.adsorbentType || '—'})</p>
+    <p><strong>Adsorbate:</strong> ${study.setup.adsorbate || '—'}</p>
+    <p><strong>Material Type:</strong> ${study.setup.materialCustom || study.setup.materialType || '—'}</p>
+    <p><strong>Wavelength:</strong> ${study.spectro.wavelength || '—'} nm</p>
+    <p><strong>Standard Curve:</strong> ${study.spectro.curve ? study.spectro.curve.equation : '—'}</p>
+    <p><strong>Standard Curve R²:</strong> ${study.spectro.curve ? study.spectro.curve.r2.toFixed(4) : '—'}</p>
+    <hr>
+    <h3>Equilibrium</h3>
+    <p><strong>Max Removal:</strong> ${maxRem != null ? maxRem.toFixed(2) + '%' : '—'}</p>
+    <p><strong>Max qt:</strong> ${maxQt != null ? maxQt.toFixed(4) + ' mg/g' : '—'}</p>
+    <hr>
+    <h3>Isotherm</h3>
+    <p><strong>Langmuir R²:</strong> ${iso.langmuir ? iso.langmuir.r2.toFixed(4) : '—'}</p>
+    <p><strong>Freundlich R²:</strong> ${iso.freundlich ? iso.freundlich.r2.toFixed(4) : '—'}</p>
+    <p><strong>Temkin R²:</strong> ${iso.temkin ? iso.temkin.r2.toFixed(4) : '—'}</p>
+    <hr>
+    <h3>Kinetics</h3>
+    <p><strong>PFO R²:</strong> ${kin.pfo ? kin.pfo.r2.toFixed(4) : '—'}</p>
+    <p><strong>PSO R²:</strong> ${kin.pso ? kin.pso.r2.toFixed(4) : '—'}</p>
+    <p><strong>IPD R²:</strong> ${kin.ipd ? kin.ipd.r2.toFixed(4) : '—'}</p>
+    <hr>
+    <h3>Thermodynamics</h3>
+    <p><strong>ΔH°:</strong> ${th.dH ? th.dH.toFixed(2) + ' kJ/mol' : '—'}</p>
+    <p><strong>ΔS°:</strong> ${th.dS ? th.dS.toFixed(2) + ' J/mol·K' : '—'}</p>
+    <p><strong>Van't Hoff R²:</strong> ${th.vantR2 ? th.vantR2.toFixed(4) : '—'}</p>
+  `;
+
+  let paper = '';
+  if (maxRem != null) {
+    paper = `The adsorption experiment showed a maximum removal efficiency of ${maxRem.toFixed(2)}% `;
+    if (eq.length) paper += `at ${eq[eq.length-1].time} min. `;
+    if (maxQt) paper += `The equilibrium adsorption capacity was ${maxQt.toFixed(4)} mg/g. `;
+  }
+  if (iso.langmuir) {
+    const models = [['Langmuir', iso.langmuir.r2], ['Freundlich', iso.freundlich?.r2 || 0], ['Temkin', iso.temkin?.r2 || 0]];
+    const best = models.reduce((a, b) => a[1] > b[1] ? a : b);
+    paper += `Among the evaluated isotherm models, the highest statistical fit was observed for ${best[0]} with R² = ${best[1].toFixed(4)}. `;
+  }
+  if (kin.pfo && kin.pso) {
+    paper += `The kinetic analysis produced R² values of ${kin.pfo.r2.toFixed(4)} and ${kin.pso.r2.toFixed(4)} for pseudo-first-order and pseudo-second-order models, respectively. `;
+  }
+  if (th.dH) {
+    paper += `Thermodynamic analysis produced ΔH° = ${th.dH.toFixed(2)} kJ/mol, ΔS° = ${th.dS.toFixed(2)} J/mol·K, and average ΔG° = ${th.avgDG?.toFixed(2)} kJ/mol.`;
+  }
+  document.getElementById('paperSummaryText').value = paper || 'Complete the studies above to generate the summary.';
+}
+
+document.getElementById('copySummaryBtn').addEventListener('click', function() {
+  const ta = document.getElementById('paperSummaryText');
+  ta.select(); document.execCommand('copy');
+  alert('✓ Summary copied to clipboard!');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// FORMULA REFERENCE
+// ═══════════════════════════════════════════════════════════════
+const formulas = [
+  { name: 'Removal %', eq: 'R% = [(Co − Ct) / Co] × 100', vars: 'Co = initial conc, Ct = conc at time t', unit: '%', use: 'Equilibrium, Kinetics' },
+  { name: 'Adsorption Capacity (qt)', eq: 'qt = [(Co − Ct) × V] / m', vars: 'V = volume (L), m = adsorbent mass (g)', unit: 'mg/g', use: 'Equilibrium, Kinetics' },
+  { name: 'Equilibrium Capacity (qe)', eq: 'qe = [(Co − Ce) × V] / m', vars: 'Ce = equilibrium conc', unit: 'mg/g', use: 'Isotherm, Thermodynamics' },
+  { name: 'Langmuir Isotherm', eq: 'Ce/qe = 1/(qmax·KL) + Ce/qmax', vars: 'qmax = max capacity, KL = Langmuir constant', unit: 'L/mg', use: 'Isotherm' },
+  { name: 'Freundlich Isotherm', eq: 'log qe = log KF + (1/n) log Ce', vars: 'KF = Freundlich constant, n = intensity', unit: '—', use: 'Isotherm' },
+  { name: 'Temkin Isotherm', eq: 'qe = B ln(KT·Ce)', vars: 'B = RT/b, KT = equilibrium binding constant', unit: '—', use: 'Isotherm' },
+  { name: 'Pseudo-First-Order', eq: 'ln(qe − qt) = ln(qe) − k1·t', vars: 'k1 = rate constant', unit: 'min⁻¹', use: 'Kinetics' },
+  { name: 'Pseudo-Second-Order', eq: 't/qt = 1/(k2·qe²) + t/qe', vars: 'k2 = rate constant', unit: 'g/mg·min', use: 'Kinetics' },
+  { name: 'Intraparticle Diffusion', eq: 'qt = kid·t^0.5 + C', vars: 'kid = diffusion rate constant', unit: 'mg/g·min^0.5', use: 'Kinetics' },
+  { name: "Van't Hoff", eq: 'ln Kd = ΔS°/R − ΔH°/(R·T)', vars: 'R = 8.314 J/mol·K', unit: '—', use: 'Thermodynamics' },
+  { name: 'Gibbs Free Energy', eq: 'ΔG° = −R·T·ln Kd', vars: 'T = temperature (K)', unit: 'kJ/mol', use: 'Thermodynamics' },
+  { name: 'Standard Curve', eq: 'A = m·C + b', vars: 'm = slope, b = intercept', unit: '—', use: 'Spectrophotometer' },
+  { name: 'R² (Coefficient of Determination)', eq: 'R² = 1 − (SS_res / SS_tot)', vars: 'SS = sum of squares', unit: '—', use: 'All models' },
+  { name: 'RMSE', eq: 'RMSE = √(Σ(yᵢ − ŷᵢ)² / n)', vars: 'yᵢ = observed, ŷᵢ = predicted', unit: 'same as y', use: 'Model comparison' },
+  { name: 'SSE', eq: 'SSE = Σ(yᵢ − ŷᵢ)²', vars: 'sum of squared errors', unit: '—', use: 'Model comparison' },
+  { name: 'MAE', eq: 'MAE = Σ|yᵢ − ŷᵢ| / n', vars: 'mean absolute error', unit: 'same as y', use: 'Model comparison' },
+];
+
+const formulaList = document.getElementById('formulaList');
+formulas.forEach(f => {
+  const div = document.createElement('div');
+  div.style.cssText = 'padding: 1rem; border-bottom: 1px solid var(--border);';
+  div.innerHTML = `
+    <h4 style="color: var(--primary); margin-bottom: 0.4rem;">${f.name}</h4>
+    <p style="font-style: italic; background: #f9fcff; padding: 0.6rem; border-radius: 6px; border-left: 3px solid var(--accent); font-family: 'Courier New', monospace;">${f.eq}</p>
+    <p style="font-size: 0.85rem;"><strong>Variables:</strong> ${f.vars}</p>
+    <p style="font-size: 0.85rem;"><strong>Units:</strong> ${f.unit} | <strong>Where used:</strong> ${f.use}</p>
+  `;
+  formulaList.appendChild(div);
+});
+document.getElementById('formulaSearch')?.addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase();
+  formulaList.querySelectorAll('div').forEach(d => {
+    d.style.display = d.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORT / EXPORT CSV
+// ═══════════════════════════════════════════════════════════════
+function showImportStatus(msg, type = 'ok') {
+  const el = document.getElementById('importStatus');
+  el.className = 'status-msg status-' + type;
+  el.textContent = msg;
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const rows = [];
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    rows.push(line.split(',').map(s => s.trim()));
+  }
+  return rows;
+}
+
+document.getElementById('downloadTemplateBtn').addEventListener('click', function() {
+  const module = document.getElementById('importModuleSelect').value;
+  let template = '', filename = '';
+  switch (module) {
+    case 'spectro':
+      template = 'Standard ID,Concentration,Absorbance\nSTD-001,0,0.000\nSTD-002,2,0.112\nSTD-003,4,0.228\nSTD-004,6,0.341\nSTD-005,8,0.455\nSTD-006,10,0.568\n';
+      filename = 'spectro_template.csv'; break;
+    case 'equilibrium':
+      template = 'Sample ID,Contact Time,Co,Ct,Dose,Volume,pH,Temperature\nEQ-001,5,50,42.5,1,100,6.5,25\nEQ-002,10,50,35.2,1,100,6.5,25\nEQ-003,15,50,28.8,1,100,6.5,25\n';
+      filename = 'equilibrium_template.csv'; break;
+    case 'isotherm':
+      template = 'Sample ID,Co,Ce,Dose,Volume,pH,Temperature\nISO-001,10,1.2,1,100,6.5,25\nISO-002,20,3.5,1,100,6.5,25\nISO-003,30,6.8,1,100,6.5,25\n';
+      filename = 'isotherm_template.csv'; break;
+    case 'kinetics':
+      template = 'Sample ID,Time,Co,Ct,qt,Temperature,pH,Dose\nKIN-001,5,50,42.5,,25,6.5,1\nKIN-002,10,50,35.2,,25,6.5,1\nKIN-003,15,50,28.8,,25,6.5,1\n';
+      filename = 'kinetics_template.csv'; break;
+    case 'thermo':
+      template = 'Sample ID,Temperature,Co,Ce,Volume,mass\nTHERMO-001,25,50,10.5,100,0.1\nTHERMO-002,35,50,12.8,100,0.1\nTHERMO-003,45,50,15.2,100,0.1\n';
+      filename = 'thermo_template.csv'; break;
+  }
+  const blob = new Blob([template], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+});
+
+document.getElementById('doImportBtn').addEventListener('click', function() {
+  const fileInput = document.getElementById('csvFileInput');
+  const module = document.getElementById('importModuleSelect').value;
+  const mode = document.getElementById('importMode').value;
+  if (!fileInput.files || !fileInput.files[0]) { showImportStatus('Please choose a CSV file first.', 'err'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const rows = parseCSV(e.target.result);
+      if (rows.length < 2) { showImportStatus('CSV file appears empty or invalid.', 'err'); return; }
+      const dataRows = rows.slice(1);
+      const study = getCurrentStudy();
+
+      if (module === 'spectro') {
+        const newStd = dataRows.map((r, i) => ({
+          id: r[0] || `STD-${String(i+1).padStart(3,'0')}`,
+          conc: parseFloat(r[1]) || null, abs: parseFloat(r[2]) || null
+        })).filter(s => s.conc != null && s.abs != null);
+        if (mode === 'replace') study.spectro.standards = newStd;
+        else study.spectro.standards = study.spectro.standards.concat(newStd);
+        renderStandardRows();
+        showImportStatus(`✓ Imported ${newStd.length} standard rows.`, 'ok');
+      } else if (module === 'equilibrium') {
+        const newRows = dataRows.map((r, i) => ({
+          sampleId: r[0] || `EQ-${String(i+1).padStart(3,'0')}`,
+          time: parseFloat(r[1]) || null, co: parseFloat(r[2]) || null, ct: parseFloat(r[3]) || null,
+          dose: parseFloat(r[4]) || null, volume: parseFloat(r[5]) || null,
+          ph: parseFloat(r[6]) || null, temp: parseFloat(r[7]) || null, removal: null, qt: null
+        }));
+        if (mode === 'replace') study.equilibrium.rows = newRows;
+        else study.equilibrium.rows = study.equilibrium.rows.concat(newRows);
+        renderEqRows();
+        showImportStatus(`✓ Imported ${newRows.length} equilibrium rows.`, 'ok');
+      } else if (module === 'isotherm') {
+        const newRows = dataRows.map((r, i) => ({
+          sampleId: r[0] || `ISO-${String(i+1).padStart(3,'0')}`,
+          co: parseFloat(r[1]) || null, ce: parseFloat(r[2]) || null,
+          dose: parseFloat(r[3]) || null, volume: parseFloat(r[4]) || null,
+          ph: parseFloat(r[5]) || null, temp: parseFloat(r[6]) || null, qe: null
+        }));
+        if (mode === 'replace') study.isotherm.rows = newRows;
+        else study.isotherm.rows = study.isotherm.rows.concat(newRows);
+        renderIsoRows();
+        showImportStatus(`✓ Imported ${newRows.length} isotherm rows.`, 'ok');
+      } else if (module === 'kinetics') {
+        const newRows = dataRows.map((r, i) => ({
+          sampleId: r[0] || `KIN-${String(i+1).padStart(3,'0')}`,
+          time: parseFloat(r[1]) || null, co: parseFloat(r[2]) || null, ct: parseFloat(r[3]) || null,
+          qt: parseFloat(r[4]) || null, temp: parseFloat(r[5]) || null,
+          ph: parseFloat(r[6]) || null, dose: parseFloat(r[7]) || null
+        }));
+        if (mode === 'replace') study.kinetics.rows = newRows;
+        else study.kinetics.rows = study.kinetics.rows.concat(newRows);
+        renderKinRows();
+        showImportStatus(`✓ Imported ${newRows.length} kinetics rows.`, 'ok');
+      } else if (module === 'thermo') {
+        const newRows = dataRows.map((r, i) => {
+          const tempC = parseFloat(r[1]);
+          return {
+            sampleId: r[0] || `THERMO-${String(i+1).padStart(3,'0')}`,
+            tempC: tempC || null, tempK: tempC ? tempC + 273.15 : null,
+            co: parseFloat(r[2]) || null, ce: parseFloat(r[3]) || null,
+            volume: parseFloat(r[4]) || null, mass: parseFloat(r[5]) || null,
+            qe: null, Kd: null, lnKd: null, dG: null
+          };
+        });
+        if (mode === 'replace') study.thermo.rows = newRows;
+        else study.thermo.rows = study.thermo.rows.concat(newRows);
+        renderThermoRows();
+        showImportStatus(`✓ Imported ${newRows.length} thermodynamics rows.`, 'ok');
+      }
+
+      saveToLocalStorage();
+      setTimeout(() => autoCalculateAll(true), 200);
+    } catch (err) {
+      showImportStatus('Error: ' + err.message, 'err');
+    }
+  };
+  reader.readAsText(fileInput.files[0]);
+});
+
+document.getElementById('exportCSVBtn').addEventListener('click', function() {
+  const module = document.getElementById('exportModuleSelect').value;
+  const study = getCurrentStudy();
+  let csv = '', filename = '';
+  if (module === 'spectro') {
+    csv = 'Standard ID,Concentration,Absorbance\n';
+    study.spectro.standards.forEach(s => { csv += `${s.id},${s.conc ?? ''},${s.abs ?? ''}\n`; });
+    filename = 'spectro_standards.csv';
+  } else if (module === 'equilibrium') {
+    csv = 'Sample ID,Contact Time,Co,Ct,Dose,Volume,pH,Temperature,Removal %,qt\n';
+    study.equilibrium.rows.forEach(r => { csv += `${r.sampleId},${r.time ?? ''},${r.co ?? ''},${r.ct ?? ''},${r.dose ?? ''},${r.volume ?? ''},${r.ph ?? ''},${r.temp ?? ''},${r.removal?.toFixed(4) ?? ''},${r.qt?.toFixed(4) ?? ''}\n`; });
+    filename = 'equilibrium.csv';
+  } else if (module === 'isotherm') {
+    csv = 'Sample ID,Co,Ce,Dose,Volume,pH,Temperature,qe\n';
+    study.isotherm.rows.forEach(r => { csv += `${r.sampleId},${r.co ?? ''},${r.ce ?? ''},${r.dose ?? ''},${r.volume ?? ''},${r.ph ?? ''},${r.temp ?? ''},${r.qe?.toFixed(4) ?? ''}\n`; });
+    filename = 'isotherm.csv';
+  } else if (module === 'kinetics') {
+    csv = 'Sample ID,Time,Co,Ct,qt,Temperature,pH,Dose\n';
+    study.kinetics.rows.forEach(r => { csv += `${r.sampleId},${r.time ?? ''},${r.co ?? ''},${r.ct ?? ''},${r.qt?.toFixed(4) ?? ''},${r.temp ?? ''},${r.ph ?? ''},${r.dose ?? ''}\n`; });
+    filename = 'kinetics.csv';
+  } else if (module === 'thermo') {
+    csv = 'Sample ID,Temperature,Co,Ce,Volume,mass,qe,Kd,lnKd,dG\n';
+    study.thermo.rows.forEach(r => { csv += `${r.sampleId},${r.tempC ?? ''},${r.co ?? ''},${r.ce ?? ''},${r.volume ?? ''},${r.mass ?? ''},${r.qe?.toFixed(4) ?? ''},${r.Kd?.toFixed(4) ?? ''},${r.lnKd?.toFixed(4) ?? ''},${r.dG?.toFixed(4) ?? ''}\n`; });
+    filename = 'thermodynamics.csv';
+  }
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+});
+
+document.getElementById('exportJSONBtn').addEventListener('click', function() {
+  const data = JSON.stringify(studies, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'adsorblab_backup.json'; a.click();
+});
+
+document.getElementById('printReportBtn').addEventListener('click', function() { window.print(); });
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('manualSaveBtn').addEventListener('click', function() {
+  saveToLocalStorage(); alert('✓ Data saved to localStorage.');
+});
+document.getElementById('recalcAllBtn').addEventListener('click', function() {
+  autoCalculateAll(false); alert('✓ All modules recalculated.');
+});
+document.getElementById('clearAllBtn').addEventListener('click', function() {
+  if (!confirm('Delete ALL studies? This cannot be undone. Export a backup first.')) return;
+  localStorage.removeItem('adsorblab_studies');
+  studies = [createNewStudy('Study 01: Biochar + Diclofenac', true)];
+  currentStudyId = studies[0].id;
+  saveToLocalStorage(); updateDashboard(); loadStudyIntoUI();
+  setTimeout(() => autoCalculateAll(false), 400);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-CALCULATE ALL
+// ═══════════════════════════════════════════════════════════════
+function autoCalculateAll(silent = true) {
+  if (typeof Chart === 'undefined') {
+    setTimeout(() => autoCalculateAll(silent), 500);
+    return;
+  }
+
+  try {
+    const study = getCurrentStudy();
+
+    // 1. Standard Curve
+    const scData = study.spectro.standards.filter(s => s.conc != null && s.abs != null && !isNaN(s.conc) && !isNaN(s.abs));
+    if (scData.length >= 2) {
+      const reg = linearRegression(scData.map(d => d.conc), scData.map(d => d.abs));
+      study.spectro.curve = {
+        slope: reg.slope, intercept: reg.intercept, r2: reg.r2,
+        equation: `A = ${reg.slope.toFixed(4)} × C + ${reg.intercept.toFixed(4)}`
+      };
+      const scr = document.getElementById('standardCurveResult');
+      if (scr) scr.innerHTML = `
+        <strong>Calibration Equation:</strong> ${study.spectro.curve.equation}<br>
+        <strong>R² =</strong> ${reg.r2.toFixed(4)}<br>
+        <strong>Inverse:</strong> C = (A − ${reg.intercept.toFixed(4)}) / ${reg.slope.toFixed(4)}`;
+      drawStandardCurve(scData, reg);
+      // Update sample calcs
+      study.spectro.samples.forEach(s => {
+        if (s.abs != null) {
+          s.calcConc = (s.abs - study.spectro.curve.intercept) / study.spectro.curve.slope;
+          if (s.initialConc != null && s.initialConc > 0) s.removal = ((s.initialConc - s.calcConc) / s.initialConc) * 100;
+        }
+      });
+      renderSampleRows();
+    }
+
+    // 2. Equilibrium
+    study.equilibrium.rows.forEach(r => {
+      if (r.co != null && r.ct != null && r.co > 0) r.removal = ((r.co - r.ct) / r.co) * 100;
+      if (r.co != null && r.ct != null && r.dose != null && r.volume != null && r.dose > 0)
+        r.qt = ((r.co - r.ct) * (r.volume / 1000)) / (r.dose / 1000);
+    });
+    renderEqRows();
+    if (study.equilibrium.rows.some(r => r.removal != null)) {
+      drawEqCharts();
+      const valid = study.equilibrium.rows.filter(r => r.removal != null && r.qt != null);
+      if (valid.length > 0) {
+        const maxRem = Math.max(...valid.map(r => r.removal));
+        const maxQt = Math.max(...valid.map(r => r.qt));
+        const eqr = document.getElementById('eqResults');
+        if (eqr) eqr.innerHTML = `
+          <strong>Maximum Removal:</strong> ${maxRem.toFixed(2)}%<br>
+          <strong>Maximum qt:</strong> ${maxQt.toFixed(4)} mg/g<br>
+          <strong>Equilibrium Time (observed):</strong> ~${valid[valid.length - 1].time} min`;
+      }
+    }
+
+    // 3. Isotherm
+    study.isotherm.rows.forEach(r => {
+      if (r.qe == null && r.co != null && r.ce != null && r.dose != null && r.volume != null && r.dose > 0)
+        r.qe = ((r.co - r.ce) * (r.volume / 1000)) / (r.dose / 1000);
+    });
+    renderIsoRows();
+    const isoValid = study.isotherm.rows.filter(r => r.ce != null && r.qe != null && r.ce > 0 && r.qe > 0);
+    if (isoValid.length >= 3) {
+      // Langmuir
+      const lr = linearRegression(isoValid.map(r => r.ce), isoValid.map(r => r.ce / r.qe));
+      const qmax = 1 / lr.slope;
+      const KL = lr.slope / lr.intercept;
+      const lrr = document.getElementById('langmuirResult');
+      if (lrr) lrr.innerHTML = `
+        <strong>qmax =</strong> ${qmax.toFixed(4)} mg/g<br>
+        <strong>KL =</strong> ${KL.toFixed(4)} L/mg<br>
+        <strong>R² =</strong> ${lr.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (Ce/qe vs Ce)</span>`;
+      drawLangmuir(isoValid, qmax, KL);
+
+      // Freundlich
+      const fr = linearRegression(isoValid.map(r => Math.log10(r.ce)), isoValid.map(r => Math.log10(r.qe)));
+      const KF = Math.pow(10, fr.intercept);
+      const n = 1 / fr.slope;
+      const frr = document.getElementById('freundlichResult');
+      if (frr) frr.innerHTML = `
+        <strong>KF =</strong> ${KF.toFixed(4)}<br>
+        <strong>n =</strong> ${n.toFixed(4)}<br>
+        <strong>R² =</strong> ${fr.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (log qe vs log Ce)</span>`;
+      drawFreundlich(isoValid, KF, n);
+
+      // Temkin
+      const tr = linearRegression(isoValid.map(r => Math.log(r.ce)), isoValid.map(r => r.qe));
+      const B = tr.slope;
+      const KT = Math.exp(tr.intercept / B);
+      const trr = document.getElementById('temkinResult');
+      if (trr) trr.innerHTML = `
+        <strong>B =</strong> ${B.toFixed(4)}<br>
+        <strong>KT =</strong> ${KT.toFixed(4)}<br>
+        <strong>R² =</strong> ${tr.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (qe vs ln Ce)</span>`;
+      drawTemkin(isoValid, B, KT);
+
+      study.isotherm.results = {
+        langmuir: { qmax, KL, r2: lr.r2 },
+        freundlich: { KF, n, r2: fr.r2 },
+        temkin: { B, KT, r2: tr.r2 }
+      };
+    }
+
+    // 4. Kinetics
+    study.kinetics.rows.forEach(r => {
+      if (r.co != null && r.ct != null && r.dose != null && r.dose > 0)
+        r.qt = ((r.co - r.ct) * 0.1) / (r.dose / 1000);
+    });
+    renderKinRows();
+    const kinValid = study.kinetics.rows.filter(r => r.time != null && r.qt != null && r.time > 0 && r.qt > 0);
+    if (kinValid.length >= 3) {
+      const qeExp = Math.max(...kinValid.map(r => r.qt));
+
+      // PFO
+      const pfoReg = linearRegression(kinValid.map(r => r.time), kinValid.map(r => Math.log(Math.max(qeExp - r.qt, 1e-9))));
+      const k1 = -pfoReg.slope;
+      const qePFO = Math.exp(pfoReg.intercept);
+      const pfor = document.getElementById('pfoResult');
+      if (pfor) pfor.innerHTML = `
+        <strong>qe (calc) =</strong> ${qePFO.toFixed(4)} mg/g<br>
+        <strong>k1 =</strong> ${k1.toFixed(4)} min⁻¹<br>
+        <strong>R² =</strong> ${pfoReg.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (ln(qe−qt) vs t)</span>`;
+      drawPFO(kinValid, qePFO, k1);
+
+      // PSO
+      const psoReg = linearRegression(kinValid.map(r => r.time), kinValid.map(r => r.time / r.qt));
+      const qePSO = 1 / psoReg.slope;
+      const k2 = (psoReg.slope ** 2) / psoReg.intercept;
+      const psor = document.getElementById('psoResult');
+      if (psor) psor.innerHTML = `
+        <strong>qe (calc) =</strong> ${qePSO.toFixed(4)} mg/g<br>
+        <strong>k2 =</strong> ${k2.toFixed(4)} g/mg·min<br>
+        <strong>R² =</strong> ${psoReg.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (t/qt vs t)</span>`;
+      drawPSO(kinValid, qePSO, k2);
+
+      // IPD
+      const ipdReg = linearRegression(kinValid.map(r => Math.sqrt(r.time)), kinValid.map(r => r.qt));
+      const ipdr = document.getElementById('ipdResult');
+      if (ipdr) ipdr.innerHTML = `
+        <strong>kid =</strong> ${ipdReg.slope.toFixed(4)}<br>
+        <strong>C =</strong> ${ipdReg.intercept.toFixed(4)}<br>
+        <strong>R² =</strong> ${ipdReg.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (qt vs √t)</span>`;
+      drawIPD(kinValid, ipdReg.slope, ipdReg.intercept);
+
+      study.kinetics.results = {
+        pfo: { qe: qePFO, k1, r2: pfoReg.r2 },
+        pso: { qe: qePSO, k2, r2: psoReg.r2 },
+        ipd: { kid: ipdReg.slope, C: ipdReg.intercept, r2: ipdReg.r2 }
+      };
+    }
+
+    // 5. Thermodynamics
+    study.thermo.rows.forEach(r => {
+      if (r.tempC != null) r.tempK = r.tempC + 273.15;
+      if (r.co != null && r.ce != null && r.volume != null && r.mass != null && r.mass > 0)
+        r.qe = ((r.co - r.ce) * (r.volume / 1000)) / (r.mass / 1000);
+      if (r.qe != null && r.ce != null && r.ce > 0) {
+        r.Kd = r.qe / r.ce;
+        r.lnKd = Math.log(r.Kd);
+        if (r.tempK != null) r.dG = -8.314 * r.tempK * r.lnKd / 1000;
+      }
+    });
+    renderThermoRows();
+    const thValid = study.thermo.rows.filter(r => r.tempK != null && r.Kd != null && r.Kd > 0 && r.tempK > 0);
+    if (thValid.length >= 2) {
+      const vantReg = linearRegression(thValid.map(r => 1 / r.tempK), thValid.map(r => r.lnKd));
+      const dH = -vantReg.slope * 8.314 / 1000;
+      const dS = vantReg.intercept * 8.314 / 1000;
+
+      const vhr = document.getElementById('vantHoffResult');
+      if (vhr) vhr.innerHTML = `
+        <strong>ΔH° =</strong> ${dH.toFixed(2)} kJ/mol<br>
+        <strong>ΔS° =</strong> ${dS.toFixed(2)} J/mol·K<br>
+        <strong>R² =</strong> ${vantReg.r2.toFixed(4)}<br>
+        <span class="text-muted">Linear regression (ln Kd vs 1/T)</span>`;
+      drawVantHoff(thValid, vantReg.slope, vantReg.intercept);
+      drawGibbs(thValid);
+
+      const avgDG = thValid.reduce((s, r) => s + r.dG, 0) / thValid.length;
+      const tir = document.getElementById('thermoInterpretation');
+      if (tir) {
+        let interp = '';
+        interp += dH > 0 ? '<strong>Endothermic</strong> (ΔH° positive).<br>' : '<strong>Exothermic</strong> (ΔH° negative).<br>';
+        interp += dS > 0 ? '<strong>Increase in entropy</strong> (ΔS° positive).<br>' : '<strong>Decrease in entropy</strong> (ΔS° negative).<br>';
+        interp += avgDG < 0 ? '<strong>Average ΔG° negative</strong> → spontaneous under studied conditions.<br>' : '<strong>Average ΔG° positive</strong> → non-spontaneous.<br>';
+        interp += '<span class="text-muted">Disclaimer: Thermodynamic interpretation depends on Kd definition and standard-state treatment.</span>';
+        tir.innerHTML = interp;
+      }
+
+      study.thermo.results = { dH, dS, vantR2: vantReg.r2, avgDG };
+    }
+
+    updateDashboard();
+    updateComparison();
+    updateSummary();
+    saveToLocalStorage();
+
+    if (!silent) console.log('✓ All modules recalculated successfully.');
+  } catch (err) {
+    console.error('Auto-calc error:', err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INITIAL LOAD
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  updateDashboard();
+  loadStudyIntoUI();
+});
+
+window.addEventListener('load', function() {
+  setTimeout(() => autoCalculateAll(false), 400);
+});
+
+if (typeof Chart !== 'undefined') {
+  setTimeout(() => autoCalculateAll(false), 1000);
+}
+
+// Save setup fields on change
+['setupTitle','setupExpId','setupResearcher','setupInstitution','setupDate','setupAdsorbent','setupAdsorbentType','setupAdsorbate','setupSolution','setupMaterialType','setupParticleSize','setupActivation','setupPyrolysis','setupDose','setupConcRange','setupPhRange','setupTempRange','setupObjective','setupMaterialCustom','setupNotes'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', function() {
+    const study = getCurrentStudy();
+    if (study) {
+      const key = id.replace('setup', '').charAt(0).toLowerCase() + id.replace('setup', '').slice(1);
+      study.setup[key] = this.value;
+    }
+  });
+});
+
+['specInstrument','specModel','specSolution','specAnalyte','specWavelength','specUnit','specBlank','specPath','specConcUnit'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', function() {
+    const study = getCurrentStudy();
+    if (study) {
+      const key = id.replace('spec', '').charAt(0).toLowerCase() + id.replace('spec', '').slice(1);
+      study.spectro[key] = this.value;
+    }
+  });
+});
+
+console.log('✅ Adsorblab | ArslanENV ready — feedback: arslanenv1@gmail.com');
+</script>
+
+</body>
+</html>
